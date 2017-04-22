@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- APPLE MOBILE WEB APP SET-UP -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <!-- <link rel="apple-touch-icon" href="/icon/tree1.png"> -->
+
+  <!-- ANDROID WEB APP SET-UP -->
+  <!-- <link href="/icon/tree.png" rel="icon" sizes="192x192" /> -->
+
+  <script src="https://use.fontawesome.com/59ffc97f0f.js"></script>
+  <!-- <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script> -->
+
+  <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.blue_grey-orange.min.css">
+  <script src="https://code.getmdl.io/1.1.3/material.min.js"></script> -->
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+
+
+
+  <link rel="stylesheet" href="main.css">
+
+  <script src="https://www.gstatic.com/firebasejs/3.7.0/firebase.js"></script>
+  <script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyC4MrEMoGv3oB5s-QOL_0EgmDiCdSCznqc",
+    authDomain: "kita-app-48708.firebaseapp.com",
+    databaseURL: "https://kita-app-48708.firebaseio.com",
+    storageBucket: "kita-app-48708.appspot.com",
+    messagingSenderId: "994027603927"
+  };
+  firebase.initializeApp(config);
+  </script>
+
+</head>
+
+<body>
+
+
+
+  <div class="container" style="">
+
+
+
+    <!-- LOGIN SCREEN SPLASH -->
+    <section id="login-screen" class="container-fluid">
+      <br/>
+      <h1>Kita App</h1>
+      <p><i>Subtitle</i></p>
+      <p>Description</p>
+
+      <div class="row">
+        <div class="col-md-2">E-Mail:</div>
+        <div class="col-md-3"><input type="text" class="form-control" id="email" value=""></div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <span title="Password">Passwort:</span>
+        </div>
+        <div class="col-md-3"><input type="password" id="password" class="form-control" value=""></div>
+      </div>
+      <br>
+      <button class="btn btn-primary" role="button" id="signInButton"><i class="fa fa-sign-in"></i> Einloggen</button>
+
+      <br />
+      <div id="output">
+        <br>
+      </div>
+    </section>
+    <!-- LOGIN SCREEN END -->
+
+
+    <!-- MAIN VIEW -->
+    <div class="" style="display:none" id="main-view">
+
+      <nav class="navbar fixed-top navbar-light bg-faded" id="main-view-navbar">
+        <div class="row">
+          <div class="col">  <a class="navbar-brand" href="#" id="pageTitle">Neues</a> </div>
+          <div class="col">    <a class="btn btn-primary pull-right" href="#" type="" role="" id="signOutButton"><i class="fa fa-power-off" aria-hidden="true"></i></a>
+          </div>
+        </div>
+      </nav>
+
+
+
+
+      <!-- Page Content Goes Here -->
+      <div class="" id="pageContent">
+      </div>
+
+    </div> <!-- MAIN VIEW END -->
+
+
+  </div>
+
+
+  <script src="js/admin.js"></script>
+  <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+</body>
+</html>

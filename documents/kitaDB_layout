@@ -1,0 +1,44 @@
+|-Kita DB
+  |-kitaUpdates
+  | |-key
+  |
+  |-chats
+    |-key of unique chats
+      |-key of message
+        |-sender: uid of sender
+        |-timestamp: time
+        |-message:  text
+        |-(receiver: uid of receiver or chat id)
+        |-read by
+          |-uid: true/false
+  |-users
+    |–uid
+      |-surname: text
+      |–name: text
+      |-kita: kitaID
+      |-group: groupID
+      |-children
+        |-child key //maybe children attributes should be safed in an extra branch
+          |-name: text
+          |-surname: text
+          |-attributes
+      |-chats
+        |-chat key
+
+  |-kitaStructure
+    |-kita
+      |-group
+        |-children key
+          |-parents key
+
+  |-children
+    |-key
+      |- name: name
+      |- surname: surname
+      |- key: value // some other personal attributes
+      |- kita: kita
+        |- kitaname: true
+      |- group: group
+        |- groupname: true
+
+  |-
