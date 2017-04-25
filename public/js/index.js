@@ -21,7 +21,6 @@ function pushNewPost() {
   var postPreview = document.getElementById('new-post-preview');
   // var postContent = document.getElementById('new-post-content'); //No longer needed
   var postContent = CKEDITOR.instances.newPostContent.getData(); //get Data of CKEDITOR
-  console.log(postContent + '---' + postTitle.value)
   if (postContent && postTitle.value && postPreview.value) {
     kitaUpdatesRef.push({
       title : postTitle.value,
