@@ -3,32 +3,6 @@
 var database = firebase.database();
 
 
-//Create New Event
-function newEvent() {
-  cleanUpUI();
-  document.getElementById('new-event').style.display = '';
-}
-
-//Push New Post To Database & Load view
-function pushEventPost() {
-  var kitaUpdatesRef = database.ref('calendarEvents');
-  var postTitle = document.getElementById('new-event-title');
-  var postContent = document.getElementById('new-event-content');
-  if (postContent.value && postTitle.value) {
-    kitaUpdatesRef.push({
-      title: postTitle.value,
-      content: postContent.value,
-      uid: firebase.auth().currentUser.uid,
-      timestamp : firebase.database.ServerValue.TIMESTAMP
-    });
-    document.getElementById('new-event').style.display = 'none';
-    displayCalendar();
-    postTitle.value = '';
-    postContent.value = '';
-  } else {
-    alert('Bitte Titel und Inhalt eingeben');
-  }
-}
 
 /*************************
   CURATOR - NEW Post
@@ -66,7 +40,7 @@ function pushNewPost() {
 }
 
 //Post Template
-function displayPost(title, preview, content,id) {
+function displayPost(title, preview, content, id) {
   var button = '';
   var clickfunction = "displayPostDetail('" + id + "')";
   if (id) {
@@ -145,19 +119,104 @@ function displayKitaUpdates() {
  CALENDAR
  *********************/
 
+ //Post Template
+ function displayEvent(title, preview, content, id) {
+   var button = '';
+   var clickfunction = "displayEventDetail('" + id + "')";
+   if (id) {
+     button = '<button class="btn btn-primary" onclick="' +
+       clickfunction +
+       '" role="button" id="button' + id + '" > Weiterlesen </button>'
+   };
+
+   //Slice Content
+   // if (content.length > 99) { //okay for text only -> for html content use different algorithm OR have extra DB Child Entry "shortDescribtion"
+   //   content = content.slice(0,100) + '...';
+   // } else { button = ''; };
+
+   var post =
+     '<p>' +
+       '<div class="card">' +
+         '<h4 class="card-header">' + title + '</h4>' +
+         '<div class="card-block">' +
+           //'<h4 class="card-title">' + title + '</h4>' +
+           '<p class="card-text">'+ preview + '</p>' +
+           button +
+         '</div>' +
+       '</div>' +
+     '</p>';
+   return post;
+ }
+
+ //Display Post Details
+ function displayEventDetail(id) {
+   //cleanUpUI(); //turned off as new content and title are passed
+   var backButton = '<br><br><button class="btn btn-primary" role="button" onclick="displayCalendar()">Zurück</button>';
+   var postRef = database.ref('calendarEvents/' + id);
+   postRef.once('value').then(function(snapshot){
+     var title = snapshot.val().title;
+     var content = snapshot.val().content;
+     $('#pageContent').html(content + backButton);
+     $('#pageTitle').html(title);
+   });
+ }
+
+
+ //Create New Event
+ function newEvent() {
+   cleanUpUI();
+   document.getElementById('new-event').style.display = '';
+ }
+
+ //Push New Post To Database & Load view
+ function pushEventPost() {
+
+   var kitaUpdatesRef = database.ref('calendarEvents');
+   var title = document.getElementById('new-event-title');
+   var preview = document.getElementById('new-event-preview');
+   var date = document.getElementById('new-event-date');
+   var content = CKEDITOR.instances.newEventContent.getData();
+
+   //Check if Date is propperly formated
+   date = parseInt(date.value) //Convert DOM Value to Integer
+   if (!Number.isInteger(date) || !(date.toString().split('').length === 6)) {
+         return alert('Bitte Formatierung des Datums beachten!')
+       }
+
+   if (content && title.value) {
+     kitaUpdatesRef.push({
+       title : title.value,
+       content : content,
+       preview : preview.value,
+       uid : firebase.auth().currentUser.uid,
+       timestamp : firebase.database.ServerValue.TIMESTAMP,
+       date : date
+     });
+     document.getElementById('new-event').style.display = 'none';
+     displayCalendar();
+     title.value = '';
+     preview.value = '';
+     date.value = '';
+     // postContent.value = '';
+   } else {
+     alert('Bitte Titel und Inhalt eingeben');
+   }
+ }
+
 //Load Calendar view
 function displayCalendar() {
   cleanUpUI();
   $("#pageTitle").html("Kita Termine");
   document.getElementById('new-event-button').style.display = '';
-
-  database.ref('calendarEvents').orderByKey().once("value")
+  database.ref('calendarEvents').orderByChild('date').once("value")
     .then(function(snapshot) {
       snapshot.forEach(function(childSnapshot){
-        var eventDate = childSnapshot.val().title;
+        var title = childSnapshot.val().title;
+        var preview = childSnapshot.val().preview;
+        var id = childSnapshot.key;
         // var eventTitle = childSnapshot.val().title;
         var eventContent = childSnapshot.val().content;
-        var post = displayPost(eventDate,eventContent);
+        var post = displayEvent(title, preview, undefined, id); //title, preview, content, id
         $('#pageContent').append(post);
       })
     })
@@ -416,9 +475,11 @@ function initApp() {
       document.getElementById('navbar-view').style.display = '';
       document.getElementById('new-post-button').style.display = 'none';
 
-      //load home view with kitaUpdates
-      displayKitaUpdates();
+      //specify init view
+      // displayKitaUpdates();
       // displayChatView();
+      displayCalendar();
+      newEvent();
 
     } else {
       // User is signed out.
