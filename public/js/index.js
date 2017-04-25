@@ -476,10 +476,10 @@ function initApp() {
       document.getElementById('new-post-button').style.display = 'none';
 
       //specify init view
-      // displayKitaUpdates();
+      displayKitaUpdates();
       // displayChatView();
-      displayCalendar();
-      newEvent();
+      // displayCalendar();
+      // newEvent();
 
     } else {
       // User is signed out.
