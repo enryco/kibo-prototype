@@ -2,6 +2,43 @@
 //var pageContent = document.getElementById('pageContent');
 var database = firebase.database();
 
+/********************
+  New Family
+  *********************/
+
+function addTemplate(target) {
+
+  //set target Template to render to
+  var template = '#' + target + 'Templates'
+
+  //Check if there is already an element and if so increase count by one
+  var count = 0 //Start Counting Target Elements from Zerooooooo
+  while (document.getElementsByClassName(target+count).length) {
+    count += 1
+  }
+  var identifier = target + count //merge target and count to one variable with syntax 'target0', 'target1', ..
+
+  //if target = child -> no email
+  var email = ''
+  if (target != 'kid') {
+    email = '<div class="col-2">E-Mail</div><div class="col-10"><input type="text" class="' + identifier + ' form-control" id="' + identifier + 'EMail'+ '" value=""></div>'
+  }
+
+  //prepare html
+  var html = '<div class="row">' +
+    '<div class="col-2">Vorname</div><div class="col-10"><input type="text" class="' + identifier + ' form-control" id="' + identifier + 'Surname' + '" value=""></div>' +
+    '<div class="col-2">Nachname</div><div class="col-10"><input type="text" class="' + identifier + ' form-control" id="' + identifier+ 'Name'+ '" value=""></div>' +
+    email +
+    '</div>' +
+    '<br>';
+
+  $(template).append(html)
+  console.log(target)
+  return html
+}
+
+
+
 
 /********************
   Splash Screen Functions
@@ -81,7 +118,6 @@ function initApp() {
       // document.getElementById('navbar-view').style.display = '';
 
       //load home view with kitaUpdates
-      $('#pageContent').html('Now Connected');
 
     } else {
       // User is signed out.
@@ -97,7 +133,8 @@ function initApp() {
   //Add Event Listenesrs
   document.getElementById('signOutButton').addEventListener('click',signOut,false);
   document.getElementById('signInButton').addEventListener('click',signIn,false);
-  // document.getElementById('new-post-button').addEventListener('click',newPost,false);
+  // document.getElementById('newFamily').addEventListener('click',newFamily,false);
+
   // document.getElementById('kita-updates-push-button').addEventListener('click',pushNewPost,false);
     //Navigation Buttons
   // document.getElementById('home-button').addEventListener('click',displayKitaUpdates,false);

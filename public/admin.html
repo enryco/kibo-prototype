@@ -44,11 +44,7 @@
 
 <body>
 
-
-
   <div class="container" style="">
-
-
 
     <!-- LOGIN SCREEN SPLASH -->
     <section id="login-screen" class="container-fluid">
@@ -77,30 +73,51 @@
     </section>
     <!-- LOGIN SCREEN END -->
 
-
     <!-- MAIN VIEW -->
     <div class="" style="display:none" id="main-view">
-
       <nav class="navbar fixed-top navbar-light bg-faded" id="main-view-navbar">
         <div class="row">
-          <div class="col">  <a class="navbar-brand" href="#" id="pageTitle">Neues</a> </div>
-          <div class="col">    <a class="btn btn-primary pull-right" href="#" type="" role="" id="signOutButton"><i class="fa fa-power-off" aria-hidden="true"></i></a>
+          <div class="col"><a class="navbar-brand" href="#" id="pageTitle">Neues</a> </div>
+          <div class="col"><a class="btn btn-primary pull-right" href="#" type="" role="" id="signOutButton"><i class="fa fa-power-off" aria-hidden="true"></i></a>
           </div>
         </div>
       </nav>
 
-
-
-
       <!-- Page Content Goes Here -->
       <div class="" id="pageContent">
+        <pre>
+          Here should appear a List with all the Families in the Kita!
+          - Family 1
+          - Family 2
+          - Family 3
+          ...
+        </pre>
+        <button class="btn btn-primary" role="button" id="newFamily"><i class="fa fa-plus"></i> Neue Familie</button>
+
+        <h1>Neue Familie</h1>
+        <div class="row">
+          <div class="col-2">Familienname</div>
+          <div class="col-10"><input type="text" class="form-control" id="familyName" value=""></div>
+        </div>
+        <hr>
+        <h3>Elternteile:</h3>
+        <div class="adultTemplates" id="adultTemplates">
+        </div>
+        <button class="btn btn-primary" role="button" id="newFamily" onclick="addTemplate('adult')"><i class="fa fa-plus"></i> Elternteil</button>
+        <hr>
+        <h3>Kind(er)</h3>
+        <div class="childTemplates" id="kidTemplates">
+        </div>
+        <br>
+        <button class="btn btn-primary" role="button" id="" onclick="addTemplate('kid')"><i class="fa fa-plus"></i> Kind</button>
+        <hr>
+        <button class="btn btn-success" role="button" id=""><i class="fa fa-check"></i> Fertig</button>
+
       </div>
 
     </div> <!-- MAIN VIEW END -->
 
-
   </div>
-
 
   <script src="js/admin.js"></script>
   <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
