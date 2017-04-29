@@ -74,6 +74,7 @@ function newFamily() {
   $('#newFamilyTarget').html(html)
   addTemplate('adult')
   addTemplate('kid')
+  document.getElementById('pageContent').style.display = 'none'
 
 }
 
