@@ -22,6 +22,21 @@ function addTemplate(target) {
   var email = ''
   if (target != 'kid') {
     email = '<div class="col-2">E-Mail</div><div class="col-10"><input type="text" class="' + identifier + ' form-control" id="' + identifier + 'EMail'+ '" value=""></div>'
+  } else {
+    email = '<div class="col-2">Gruppe</div><div class="col-6"><input type="text" class="' + identifier + ' form-control" id="' + identifier + 'Group'+ '" value="" disabled></div>'
+    + '<div class="btn-group col-4">'
+      + '<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'
+        + 'Gruppe...'
+    +  '</button>'
+    +  '<div class="dropdown-menu">'
+          //Groups
+    +    '<button class="dropdown-item" href="#" onclick="(function(){ document.getElementById(\'' + identifier + 'Group\').value = \'Gruppe 1\'})()">Gruppe 1</button>'
+    +    '<button class="dropdown-item" href="#">Gruppe 2</button>'
+    +    '<button class="dropdown-item" href="#">Gruppe 3</button>'
+    +    '<div class="dropdown-divider"></div>'
+    +    '<button class="dropdown-item" href="#">+ Neue Gruppe</button>'
+    +  '</div>'
+    + '</div>';
   }
 
   //prepare html
@@ -33,12 +48,34 @@ function addTemplate(target) {
     '<br>';
 
   $(template).append(html)
-  console.log(target)
   return html
 }
 
+function newFamily() {
+  var html = `
+    <h1>Neue Familie</h1>
+    <div class="row">
+      <div class="col-2">Familienname</div>
+      <div class="col-10"><input type="text" class="form-control" id="familyName" value=""></div>
+    </div>
+    <hr>
+    <h3>Elternteile:</h3>
+    <div class="adultTemplates" id="adultTemplates">
+    </div>
+    <button class="btn btn-primary" role="button" id="newFamily" onclick="addTemplate('adult')"><i class="fa fa-plus"></i> Elternteil</button>
+    <hr>
+    <h3>Kind(er)</h3>
+    <div class="childTemplates" id="kidTemplates">
+    </div>
+    <button class="btn btn-primary" role="button" id="" onclick="addTemplate('kid')"><i class="fa fa-plus"></i> Kind</button>
+    <hr>
+    <button class="btn btn-success" role="button" id=""><i class="fa fa-check"></i> Fertig</button>
+    `
+  $('#newFamilyTarget').html(html)
+  addTemplate('adult')
+  addTemplate('kid')
 
-
+}
 
 /********************
   Splash Screen Functions
@@ -133,15 +170,7 @@ function initApp() {
   //Add Event Listenesrs
   document.getElementById('signOutButton').addEventListener('click',signOut,false);
   document.getElementById('signInButton').addEventListener('click',signIn,false);
-  // document.getElementById('newFamily').addEventListener('click',newFamily,false);
-
-  // document.getElementById('kita-updates-push-button').addEventListener('click',pushNewPost,false);
-    //Navigation Buttons
-  // document.getElementById('home-button').addEventListener('click',displayKitaUpdates,false);
-  // document.getElementById('calendar-button').addEventListener('click',displayCalendar,false);
-  // document.getElementById('chat-button').addEventListener('click',displayChatView,false);
-  // document.getElementById('user-button').addEventListener('click',displayUser,false);
-  // document.getElementById('home-button').addEventListener('click',displayKitaUpdates,false);
+  document.getElementById('newFamily').addEventListener('click',newFamily,false);
 
   // $('#signInButton').on('click',signIn);
 }
