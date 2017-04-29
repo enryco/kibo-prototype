@@ -78,6 +78,72 @@ function newFamily() {
 
 }
 
+function pushAdults(familyKey) {
+  //iterate over adultTemplates
+  //gather in neat JSON
+  var count = 0
+  var target = 'adult'
+  var adults = {}
+  while (document.getElementById(target+count+'Surname') !== null) {
+    let adultKey = firebase.database().ref().push().key
+    let surname = document.getElementById(target+count+'Surname').value
+    let name =  document.getElementById(target+count+'Name').value
+    let email = document.getElementById(target+count+'EMail').value
+    let adult = {
+      surname,
+      name,
+      email,
+      family : { [familyKey] : true }
+    }
+    firebase.database().ref('/users/'+adultKey).set(adult)
+    adults[adultKey] = true //make list for family/adults
+    count += 1
+  }
+
+  firebase.database().ref('families/' + familyKey + '/adults/').set(adults)
+
+}
+function pushKids(familyKey) {
+  //iterate over kidTemplates
+  //gather in neat JSON
+  var count = 0
+  var target = 'kid'
+  var kids = {}
+  while (document.getElementById(target+count+'Surname') !== null) {
+    let adultKey = firebase.database().ref().push().key
+    let surname = document.getElementById(target+count+'Surname').value
+    let name =  document.getElementById(target+count+'Name').value
+    let group = document.getElementById(target+count+'Group').value
+    kids[adultKey] = {
+      surname,
+      name,
+      group
+    }
+    count += 1
+  }
+  firebase.database().ref().child('families/' + familyKey + '/kids').set(kids)
+}
+
+function pushFamilyToFirebase() {
+  //generate new family key
+  var familyKey = firebase.database().ref().child('families').push().key
+  var familyName = document.getElementById('familyName').value
+
+  //write familyname to family entry
+  var family = {
+    id : familyKey,
+    name : familyName
+    // members
+  }
+
+  //push family base to firebase
+  firebase.database().ref().child('families/'+familyKey).update(family)
+
+  pushAdults(familyKey)
+  pushKids(familyKey)
+
+}
+
 /********************
   Splash Screen Functions
   *********************/
