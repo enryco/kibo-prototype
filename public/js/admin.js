@@ -69,7 +69,8 @@ function newFamily() {
     </div>
     <button class="btn btn-primary" role="button" id="" onclick="addTemplate('kid')"><i class="fa fa-plus"></i> Kind</button>
     <hr>
-    <button class="btn btn-success" role="button" id=""><i class="fa fa-check"></i> Fertig</button>
+    <button class="btn btn-success" role="button" id="done" onclick="pushFamilyToFirebase()"><i class="fa fa-check"></i> Fertig</button>
+    <button class="btn btn-danger" role="button" id="done" onclick="cleanUpUI()"><i class="fa fa-times"></i> Abbrechen</button>
     `
   $('#newFamilyTarget').html(html)
   addTemplate('adult')
@@ -100,10 +101,11 @@ function pushAdults(familyKey) {
     count += 1
   }
 
-  firebase.database().ref('families/' + familyKey + '/adults/').set(adults)
+  return firebase.database().ref('families/' + familyKey + '/adults/').set(adults)
 
 }
 function pushKids(familyKey) {
+
   //iterate over kidTemplates
   //gather in neat JSON
   var count = 0
@@ -121,14 +123,18 @@ function pushKids(familyKey) {
     }
     count += 1
   }
-  firebase.database().ref().child('families/' + familyKey + '/kids').set(kids)
+  return firebase.database().ref().child('families/' + familyKey + '/kids').set(kids)
 }
 
-function pushFamilyToFirebase() {
-  //generate new family key
-  var familyKey = firebase.database().ref().child('families').push().key
-  var familyName = document.getElementById('familyName').value
+function pushFamilyToFirebase(familyKey) {
+  //first, disable button to prevent multiple pushes
+  document.getElementById('done').disabled = true
 
+  //if no key is provided, generate new family key
+  if (familyKey === undefined) {
+    var familyKey = firebase.database().ref().child('families').push().key
+  }
+  var familyName = document.getElementById('familyName').value
   //write familyname to family entry
   var family = {
     id : familyKey,
@@ -137,10 +143,16 @@ function pushFamilyToFirebase() {
   }
 
   //push family base to firebase
-  firebase.database().ref().child('families/'+familyKey).update(family)
+  var p1 = firebase.database().ref().child('families/'+familyKey).set(family)
+  var p2 = pushAdults(familyKey)
+  var p3 = pushKids(familyKey)
 
-  pushAdults(familyKey)
-  pushKids(familyKey)
+  //wait for all to be sovled
+  Promise.all([p1, p2, p3]).then(function(){
+    cleanUpUI()
+  }).catch(function(e){
+    console.log(e)
+  })
 
 }
 
@@ -196,10 +208,8 @@ function signIn() {
 
 //Clean Up Page Content
 function cleanUpUI() {
-  $('#pageContent').html('');
-  document.getElementById('new-post').style.display = 'none';
-  document.getElementById('navbar-chat').style.display = 'none';
-  document.getElementById('navbar-view').style.display = '';
+  document.getElementById('pageContent').style.display = ''
+  $('#newFamilyTarget').html('')
 }
 
 
