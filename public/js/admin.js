@@ -156,6 +156,17 @@ function pushFamilyToFirebase(familyKey) {
 
 }
 
+function getFamilies() {
+  cleanUpUI()
+  firebase.database().ref('/families').once('value')
+  .then(function(snapshot) {
+    snapshot.forEach(function(childSnapshot){
+      console.log(childSnapshot.val().name)
+    })
+  })
+
+}
+
 /********************
   Splash Screen Functions
   *********************/
