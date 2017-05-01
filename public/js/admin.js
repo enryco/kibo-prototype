@@ -21,31 +21,31 @@ function addTemplate(target) {
   //if target = child -> no email
   var email = ''
   if (target != 'kid') {
-    email = '<div class="col-2">E-Mail</div><div class="col-10"><input type="text" class="' + identifier + ' form-control" id="' + identifier + 'EMail'+ '" value=""></div>'
+    email = `<div class="col-2">E-Mail</div><div class="col-10"><input type="text" class="${identifier} form-control" id="${identifier}EMail" value=""></div>`
   } else {
-    email = '<div class="col-2">Gruppe</div><div class="col-6"><input type="text" class="' + identifier + ' form-control" id="' + identifier + 'Group'+ '" value="" disabled></div>'
-    + '<div class="btn-group col-4">'
-      + '<button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'
-        + 'Gruppe...'
-    +  '</button>'
-    +  '<div class="dropdown-menu">'
+    email = `<div class="col-2">Gruppe</div><div class="col-6"><input type="text" class="${identifier} form-control" id="${identifier}Group" value="" disabled></div>
+    <div class="btn-group col-4">
+      <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Gruppe...
+     </button>
+     <div class="dropdown-menu">
           //Groups
-    +    '<button class="dropdown-item" href="#" onclick="(function(){ document.getElementById(\'' + identifier + 'Group\').value = \'Gruppe 1\'})()">Gruppe 1</button>'
-    +    '<button class="dropdown-item" href="#">Gruppe 2</button>'
-    +    '<button class="dropdown-item" href="#">Gruppe 3</button>'
-    +    '<div class="dropdown-divider"></div>'
-    +    '<button class="dropdown-item" href="#">+ Neue Gruppe</button>'
-    +  '</div>'
-    + '</div>';
+       <button class="dropdown-item" href="#" onclick="(function(){ document.getElementById('${identifier}Group').value = 'Gruppe 1'})()">Gruppe 1</button>
+       <button class="dropdown-item" href="#">Gruppe 2</button>
+       <button class="dropdown-item" href="#">Gruppe 3</button>
+       <div class="dropdown-divider"></div>
+       <button class="dropdown-item" href="#">Neue Gruppe</button>
+     </div>
+    </div>`
   }
 
   //prepare html
-  var html = '<div class="row">' +
-    '<div class="col-2">Vorname</div><div class="col-10"><input type="text" class="' + identifier + ' form-control" id="' + identifier + 'Surname' + '" value=""></div>' +
-    '<div class="col-2">Nachname</div><div class="col-10"><input type="text" class="' + identifier + ' form-control" id="' + identifier+ 'Name'+ '" value=""></div>' +
-    email +
-    '</div>' +
-    '<br>';
+  var html = `<div class="row">
+    <div class="col-2">Vorname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Surname" value=""></div>
+    <div class="col-2">Nachname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Name" value=""></div>
+    ${email}
+    </div>
+    <br>`
 
   $(template).append(html)
   return html
