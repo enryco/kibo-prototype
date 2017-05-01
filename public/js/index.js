@@ -45,19 +45,21 @@ function pushNewPost() {
 }
 
 //Post Template
-function displayPost(title, preview, content, id) {
+function displayPost(title, preview, target, id) {
   var button = '';
-  var clickfunction = "displayPostDetail('" + id + "')";
+  if (target == 'post') {
+    var clickfunction = `displayPostDetail('${id}','post')`
+  } else if (target == 'event') {
+    var clickfunction = `displayPostDetail('${id}','event')`
+  } else {
+    return Error('Target not defined')
+  }
+
   if (id) {
     button = '<button class="btn btn-primary" onclick="' +
       clickfunction +
       '" role="button" id="button' + id + '" > Weiterlesen </button>'
   };
-
-  //Slice Content
-  // if (content.length > 99) { //okay for text only -> for html content use different algorithm OR have extra DB Child Entry "shortDescribtion"
-  //   content = content.slice(0,100) + '...';
-  // } else { button = ''; };
 
   var post =
     '<p>' +
@@ -73,17 +75,22 @@ function displayPost(title, preview, content, id) {
   return post;
 }
 
-
-
 /****************************
   KITA UPDATES
   ***************************/
 
 //Display Post Details
-function displayPostDetail(id) {
-  //cleanUpUI(); //turned off as new content and title are passed
-  var backButton = '<br><br><button class="btn btn-primary" role="button" onclick="displayKitaUpdates()">Zurück</button>';
-  var postRef = database.ref('kitaUpdates/' + id);
+function displayPostDetail(id, target) {
+  if (target == 'post') {
+    var backButton = '<br><br><button class="btn btn-primary" role="button" onclick="displayKitaUpdates()">Zurück</button>';
+    var postRef = database.ref('kitaUpdates/' + id);
+  } else if (target == 'event') {
+    var backButton = '<br><br><button class="btn btn-primary" role="button" onclick="displayCalendar()">Zurück</button>';
+    var postRef = database.ref('calendarEvents/' + id);
+  } else {
+    return Error('Target not defined')
+  }
+  console.log(target)
   postRef.once('value').then(function(snapshot){
     var title = snapshot.val().title;
     var content = snapshot.val().content;
@@ -107,14 +114,10 @@ function displayKitaUpdates() {
       var postTitle = childSnapshot.val().title;
       var postContent = childSnapshot.val().content;
       var postPreview = childSnapshot.val().preview;
-      var post = displayPost(postTitle,postPreview,postContent,postID);
+      var post = displayPost(postTitle,postPreview,'post',postID);
       var currentContent = $('#pageContent').html();
       var newContent = post + currentContent;
       $('#pageContent').html(newContent);
-      if (postContent.length > 99) {
-        // document.getElementById('button' + postID).addEventListener('click',function() {displayPostDetail(postID)},false);
-        // $('#button' + postID).click(function() {displayPostDetail(postID)});
-    };
     })
   });
 
@@ -124,47 +127,6 @@ function displayKitaUpdates() {
  CALENDAR
  *********************/
 
- //Post Template
- function displayEvent(title, preview, content, id) {
-   var button = '';
-   var clickfunction = "displayEventDetail('" + id + "')";
-   if (id) {
-     button = '<button class="btn btn-primary" onclick="' +
-       clickfunction +
-       '" role="button" id="button' + id + '" > Weiterlesen </button>'
-   };
-
-   //Slice Content
-   // if (content.length > 99) { //okay for text only -> for html content use different algorithm OR have extra DB Child Entry "shortDescribtion"
-   //   content = content.slice(0,100) + '...';
-   // } else { button = ''; };
-
-   var post =
-     '<p>' +
-       '<div class="card">' +
-         '<h4 class="card-header">' + title + '</h4>' +
-         '<div class="card-block">' +
-           //'<h4 class="card-title">' + title + '</h4>' +
-           '<p class="card-text">'+ preview + '</p>' +
-           button +
-         '</div>' +
-       '</div>' +
-     '</p>';
-   return post;
- }
-
- //Display Post Details
- function displayEventDetail(id) {
-   //cleanUpUI(); //turned off as new content and title are passed
-   var backButton = '<br><br><button class="btn btn-primary" role="button" onclick="displayCalendar()">Zurück</button>';
-   var postRef = database.ref('calendarEvents/' + id);
-   postRef.once('value').then(function(snapshot){
-     var title = snapshot.val().title;
-     var content = snapshot.val().content;
-     $('#pageContent').html(content + backButton);
-     $('#pageTitle').html(title);
-   });
- }
 
 
  //Create New Event
@@ -221,7 +183,7 @@ function displayCalendar() {
         var id = childSnapshot.key;
         // var eventTitle = childSnapshot.val().title;
         var eventContent = childSnapshot.val().content;
-        var post = displayEvent(title, preview, undefined, id); //title, preview, content, id
+        var post = displayPost(title, preview, 'event', id); //title, preview, content, id
         $('#pageContent').append(post);
       })
     })
