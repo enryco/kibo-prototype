@@ -7,8 +7,9 @@ var database = firebase.database();
   *********************/
 
 function addTemplate(target) {
+  // target = kid || adult
 
-  //set target Template to render to
+  //set target Template to render to using jQuery
   var template = '#' + target + 'Templates'
 
   //Check if there is already an element and if so increase count by one
@@ -19,9 +20,11 @@ function addTemplate(target) {
   var identifier = target + count //merge target and count to one variable with syntax 'target0', 'target1', ..
 
   //if target = child -> no email
+  //TODO: change var email to an general name like thirdField
+  //TODO: before deploy, change values to ''
   var email = ''
   if (target != 'kid') {
-    email = `<div class="col-2">E-Mail</div><div class="col-10"><input type="text" class="${identifier} form-control" id="${identifier}EMail" value=""></div>`
+    email = `<div class="col-2">E-Mail</div><div class="col-10"><input type="text" class="${identifier} form-control" id="${identifier}EMail" value="testUser${count}@enricoscherlies.de"></div>`
   } else {
     email = `<div class="col-2">Gruppe</div><div class="col-6"><input type="text" class="${identifier} form-control" id="${identifier}Group" value="" disabled></div>
     <div class="btn-group col-4">
@@ -41,8 +44,8 @@ function addTemplate(target) {
 
   //prepare html
   var html = `<div class="row">
-    <div class="col-2">Vorname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Surname" value=""></div>
-    <div class="col-2">Nachname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Name" value=""></div>
+    <div class="col-2">Vorname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Surname" value="${identifier}Surname"></div>
+    <div class="col-2">Nachname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Name" value="${identifier}Name"></div>
     ${email}
     </div>
     <br>`
@@ -93,13 +96,35 @@ function pushAdults(familyKey) {
     let adult = {
       surname,
       name,
+      fullname : `${surname} ${name}`,
       email,
       family : { [familyKey] : true }
     }
-    firebase.database().ref('/users/'+adultKey).set(adult)
+
+    //
+    let prom1 = firebase.database().ref('/users/'+adultKey).set(adult)
     adults[adultKey] = true //make list for family/adults
+
+    //create actual user w/ random pw
+    let temporaryPassword = firebase.database().ref().push().key //use a key to set pw
+    let prom2 = firebase.auth().createUserWithEmailAndPassword(email, temporaryPassword).catch(function(error) {
+      // Handle Errors here.
+      var errorCode = error.code
+      var errorMessage = error.message
+      alert(errorMessage)
+      // ...
+    });
+
+    //wait for all promisses
+    Promise.all([prom1, prom2]).then(function(proms){
+      console.log(proms[1].uid)
+    }).catch(function(error){
+      alert(error.message)
+    })
     count += 1
+
   }
+
 
   return firebase.database().ref('families/' + familyKey + '/adults/').set(adults)
 
@@ -248,7 +273,7 @@ function initApp() {
       // User is signed out.
       document.getElementById('login-screen').style.display = ''; //Show login screen if user is signed-Out
       document.getElementById('main-view').style.display = 'none';
-      document.getElementById('navbar-view').style.display = 'none';
+      // document.getElementById('navbar-view').style.display = 'none';
     } //end if
   }); //end of mehtod
 
