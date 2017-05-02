@@ -1,3 +1,18 @@
+//default app
+var config = {
+  apiKey: "AIzaSyC4MrEMoGv3oB5s-QOL_0EgmDiCdSCznqc",
+  authDomain: "kita-app-48708.firebaseapp.com",
+  databaseURL: "https://kita-app-48708.firebaseio.com",
+  storageBucket: "kita-app-48708.appspot.com",
+  messagingSenderId: "994027603927"
+};
+firebase.initializeApp(config);
+
+//second app for admin reasons…
+var taube = firebase.initializeApp(config, 'taube');
+
+
+
 //shortcuts
 //var pageContent = document.getElementById('pageContent');
 var database = firebase.database();
@@ -32,7 +47,6 @@ function addTemplate(target) {
         Gruppe...
      </button>
      <div class="dropdown-menu">
-          //Groups
        <button class="dropdown-item" href="#" onclick="(function(){ document.getElementById('${identifier}Group').value = 'Gruppe 1'})()">Gruppe 1</button>
        <button class="dropdown-item" href="#">Gruppe 2</button>
        <button class="dropdown-item" href="#">Gruppe 3</button>
@@ -83,17 +97,20 @@ function newFamily() {
 }
 
 function pushAdults(familyKey) {
-  //iterate over adultTemplates
-  //gather in neat JSON
+  // FUNCTION to set adult entries to db
   var count = 0
   var target = 'adult'
   var adults = {}
+  var callCenter = [] //use to gather all promisses from while loop
+
+  //iterate over adultTemplates
+  //gather in neat JSON
   while (document.getElementById(target+count+'Surname') !== null) {
     let adultKey = firebase.database().ref().push().key
     let surname = document.getElementById(target+count+'Surname').value
     let name =  document.getElementById(target+count+'Name').value
     let email = document.getElementById(target+count+'EMail').value
-    let adult = {
+    var adult = {
       surname,
       name,
       fullname : `${surname} ${name}`,
@@ -101,13 +118,10 @@ function pushAdults(familyKey) {
       family : { [familyKey] : true }
     }
 
-    //
-    let prom1 = firebase.database().ref('/users/'+adultKey).set(adult)
-    adults[adultKey] = true //make list for family/adults
-
     //create actual user w/ random pw
+    //using second firebase app for signin up new user
     let temporaryPassword = firebase.database().ref().push().key //use a key to set pw
-    let prom2 = firebase.auth().createUserWithEmailAndPassword(email, temporaryPassword).catch(function(error) {
+    let newUser = taube.auth().createUserWithEmailAndPassword(email, temporaryPassword).catch(function(error) {
       // Handle Errors here.
       var errorCode = error.code
       var errorMessage = error.message
@@ -115,20 +129,29 @@ function pushAdults(familyKey) {
       // ...
     });
 
-    //wait for all promisses
-    Promise.all([prom1, prom2]).then(function(proms){
-      console.log(proms[1].uid)
+    //append newUser (Promise) to callCenter
+    callCenter.push(newUser)
+
+    //wait for newUser promis
+    Promise.all([newUser]).then(function(proms){
+      firebase.database().ref('/users/'+proms[0].uid).set(adult)
+      adults[proms[0].uid] = true //make list for family/adults
+      //delete user to allow smooth developement
+      taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
+
     }).catch(function(error){
       alert(error.message)
     })
-    count += 1
 
+    count += 1
   }
 
-
-  return firebase.database().ref('families/' + familyKey + '/adults/').set(adults)
-
+  //wait for everyone to have us called back
+  Promise.all(callCenter).then(function(){
+    return firebase.database().ref('/families/' + familyKey + '/adults/').set(adults)
+  })
 }
+
 function pushKids(familyKey) {
 
   //iterate over kidTemplates
@@ -137,11 +160,11 @@ function pushKids(familyKey) {
   var target = 'kid'
   var kids = {}
   while (document.getElementById(target+count+'Surname') !== null) {
-    let adultKey = firebase.database().ref().push().key
+    let newKey = firebase.database().ref().push().key
     let surname = document.getElementById(target+count+'Surname').value
     let name =  document.getElementById(target+count+'Name').value
     let group = document.getElementById(target+count+'Group').value
-    kids[adultKey] = {
+    kids[newKey] = {
       surname,
       name,
       group
