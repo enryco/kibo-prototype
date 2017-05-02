@@ -18,6 +18,21 @@ var taube = firebase.initializeApp(config, 'taube');
 var database = firebase.database();
 
 /********************
+  Show Family DB Tree
+  *********************/
+
+function showFamilies() {
+  cleanUpUI()
+  firebase.database().ref('families/').once('value').then(function(snapshot){
+    snapshot.forEach(function(childSnapshot){
+      let familyTemplate = `<p>- ${childSnapshot.val().name}</p>`
+      $('#pageContent').append(familyTemplate)
+    })
+  })
+}
+
+
+/********************
   New Family
   *********************/
 
@@ -198,22 +213,13 @@ function pushFamilyToFirebase(familyKey) {
   //wait for all to be sovled
   Promise.all([p1, p2, p3]).then(function(){
     cleanUpUI()
+    showFamilies()
   }).catch(function(e){
     console.log(e)
   })
 
 }
 
-function getFamilies() {
-  cleanUpUI()
-  firebase.database().ref('/families').once('value')
-  .then(function(snapshot) {
-    snapshot.forEach(function(childSnapshot){
-      console.log(childSnapshot.val().name)
-    })
-  })
-
-}
 
 /********************
   Splash Screen Functions
@@ -269,6 +275,7 @@ function signIn() {
 function cleanUpUI() {
   document.getElementById('pageContent').style.display = ''
   $('#newFamilyTarget').html('')
+  $('#pageContent').html('<h3>Familien in der Datenbank:</h3>')
 }
 
 
@@ -290,7 +297,8 @@ function initApp() {
       document.getElementById('main-view').style.display = '';
       // document.getElementById('navbar-view').style.display = '';
 
-      //load home view with kitaUpdates
+      //load home view with family DB
+      showFamilies()
 
     } else {
       // User is signed out.

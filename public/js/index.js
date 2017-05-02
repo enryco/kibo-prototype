@@ -269,8 +269,6 @@ function displayChatView() {
   }, 200);
 }
 
-
-
 //Send New Message
 function pushMessageToFirebase(chatID, senderID, receiverIDs, message) {
   if (!(chatID && senderID && receiverIDs && message)) {
