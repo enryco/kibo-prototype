@@ -240,21 +240,21 @@ function displayChatView() {
   var chatRef = database.ref('/chats/' + chatID + '/messages').orderByKey();
   chatRef.once('value').then( function(snapshot){
     snapshot.forEach(function(childSnapshot){
-      var messageID = childSnapshot.key;
-      var content = childSnapshot.val().content;
+      let messageID = childSnapshot.key;
+      let content = childSnapshot.val().content;
 
       //sender Name
-      var senderID = childSnapshot.val().sender;
-      var senderName = childSnapshot.val().senderName;
+      let senderID = childSnapshot.val().sender;
+      let senderName = childSnapshot.val().senderName;
 
       // console.log(senderName)
       //time
-      var timestamp = childSnapshot.val().timestamp;
-      var timeObj = new Date(timestamp);
+      let timestamp = childSnapshot.val().timestamp;
+      let timeObj = new Date(timestamp);
       time = timeObj.toLocaleString();
 
-      var header = senderName + ' - ' + time;
-      var messageHTML = displayMessage(content,header);
+      let header = senderName + ' - ' + time;
+      let messageHTML = displayMessage(content,header);
 
       $('#pageContent').append(messageHTML);
       // var header = senderName + ' - ' + time;

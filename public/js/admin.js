@@ -11,8 +11,6 @@ firebase.initializeApp(config);
 //second app for admin reasons…
 var taube = firebase.initializeApp(config, 'taube');
 
-
-
 //shortcuts
 //var pageContent = document.getElementById('pageContent');
 var database = firebase.database();
@@ -30,7 +28,6 @@ function showFamilies() {
     })
   })
 }
-
 
 /********************
   New Family
@@ -130,7 +127,7 @@ function pushAdults(familyKey) {
       firstname,
       fullname : `${firstname} ${lastname}`,
       email,
-      familyKey,
+      familyKey
     }
 
     //create actual user w/ random pw
@@ -169,14 +166,19 @@ function pushAdults(familyKey) {
     count += 1
   }
 
+
   //wait for everyone to have us called back
   Promise.all(callCenter).then(function(){
+    //newChat TODO get chat out of this messy function
+    let chatUsers = {}
+    chatUsers = JSON.parse(JSON.stringify(adults))
+    chatUsers[firebase.auth().currentUser.uid] = true
+    newChat(chatUsers)
     return firebase.database().ref('/families/' + familyKey + '/adults/').set(adults)
   })
 }
 
 function pushKids(familyKey) {
-
   //iterate over kidTemplates
   //gather in neat JSON
   var count = 0
@@ -208,15 +210,14 @@ function pushFamilyToFirebase(familyKey) {
   var familyName = document.getElementById('familyName').value
   //write familyname to family entry
   var family = {
-    id : familyKey,
     name : familyName
     // members
   }
 
   //push family base to firebase
-  var p1 = firebase.database().ref().child('families/'+familyKey).set(family)
-  var p2 = pushAdults(familyKey)
-  var p3 = pushKids(familyKey)
+  let p1 = firebase.database().ref().child('families/'+familyKey).set(family)
+  let p2 = pushAdults(familyKey)
+  let p3 = pushKids(familyKey)
 
   //wait for all to be sovled
   Promise.all([p1, p2, p3]).then(function(){
@@ -227,6 +228,36 @@ function pushFamilyToFirebase(familyKey) {
   })
 
 }
+
+//initialize a new chat
+//users must be json containing { user1 : true, ... }
+function newChat(users) {
+  //get new chat key
+  var chatKey = firebase.database().ref('chats').push().key
+
+  //create participants JSON
+  for (let key in users) {
+    //add chat id to users/$uid/chats
+    firebase.database().ref(`/users/${key}/chats`).set({ [chatKey] : true })
+  }
+
+  //initialize chat with paticipants
+  firebase.database().ref(`/chats/${chatKey}/users`).set(users)
+
+  //initialize welcome message
+  let message = {
+    content : `Willkommen im Chat View! Mitglieder sind ${JSON.stringify(users)}`,
+    sender : firebase.auth().currentUser.uid,
+    senderName : "Admin",
+    timestamp : firebase.database.ServerValue.TIMESTAMP
+    // receiver :
+    //   receiverIDs
+    //timestamp
+  }
+  firebase.database().ref(`/chats/${chatKey}/messages`).set(message)
+
+}
+
 
 
 /********************
@@ -316,8 +347,9 @@ function initApp() {
     } //end if
   }); //end of mehtod
 
+  //dev
   $('#email').val('e.scherlies@me.com');
-
+  $('#password').val('qwer1234');
 
   //Add Event Listenesrs
   document.getElementById('signOutButton').addEventListener('click',signOut,false);
