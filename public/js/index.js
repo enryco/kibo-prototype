@@ -212,7 +212,7 @@ function displayMessage(content,sender) {
 //Handle Enter-to-send
 function enterToSend(event) {
     if (event.keyCode == 13) {
-      sendMessage();
+      document.getElementById('message-send-button').click();
     }
 }
 
@@ -228,7 +228,7 @@ function getSenderName(senderID) {
 }
 
 //DiplayChat
-function displayChatView() {
+function displayChat(chatID) {
   cleanUpUI();
   $('#pageTitle').html('Chat');
   // document.getElementById('navbar-view').style.display = 'none';
@@ -236,7 +236,7 @@ function displayChatView() {
   //displayChats();
 
   //display single Team Chat for Test-Phase
-  var chatID = '-KgjXsexQJEG-zFcR1aE'
+  // var chatID = '-KjEjimClcMXNV1DtGax'
   var chatRef = database.ref('/chats/' + chatID + '/messages').orderByKey();
   chatRef.once('value').then( function(snapshot){
     snapshot.forEach(function(childSnapshot){
@@ -263,10 +263,43 @@ function displayChatView() {
     });
   });
 
+  document.getElementById('message-send-button').setAttribute('onclick',`sendMessage('${chatID}')`)
   $('body').css('padding-bottom','120px');
   setTimeout(function(){
     window.scrollBy(0,document.getElementById('pageContent').scrollHeight);
+    // $('#message-send-button').on('click', _ => sendMessage(chatID))
   }, 200);
+}
+
+//Display Chats (esp. for Kilei or later use)
+function displayChats() {
+  document.getElementById('navbar-chat').style.display = 'none';
+  let list = `<div class="list-group" id="chatsGroup"></div>`
+  $('#pageContent').html(list)
+
+  //get all chats and appent them to the list
+  function chatElement(chatKey,header) {
+    let html = `<a href="#" class="list-group-item list-group-item-action flex-column align-items-start" onclick="displayChat('${chatKey}')">
+      <div class="d-flex w-100 justify-content-between">
+        <h5 class="mb-1">${header}</h5>
+        <small class="text-muted">Placeholder Time</small>
+      </div>
+      <small class="text-muted">Vorschautext Platzhalter</small>
+    </a>`
+    $('#chatsGroup').append(html)
+  }
+  //get all chats the user is in
+  database.ref(`users/${firebase.auth().currentUser.uid}/chats`).once('value')
+    .then( snapshot => {
+      snapshot.forEach( childSnapshot => {
+        let famName = ''
+        let chatKey = childSnapshot.key
+        database.ref(`chats/${chatKey}/`).once('value').then( snapshot => {
+          famName = snapshot.val().familyName
+          chatElement(chatKey,famName)
+        })
+      })
+    });
 }
 
 //Send New Message
@@ -291,7 +324,7 @@ function pushMessageToFirebase(chatID, senderID, receiverIDs, message) {
       //timestamp
     };
     chatRef.push(chatJSON);
-    displayChatView(); //Reload Chat View -> Later: Check if message has arrived @DB and APPEND to current view
+    displayChat(chatID); //Reload Chat View -> Later: Check if message has arrived @DB and APPEND to current view
 
   });
 
@@ -305,8 +338,8 @@ function sendMessage(chatID) {
   var message = document.getElementById('chat-message-input'); //message form id
   if (!message.value) { return alert('Nachricht darf nicht leer sein')};
   //var chatID = database.ref('user/' + senderID + '/chats'); //get reference to chat
-  //[TO-DO] get actual chatID
-  var chatID = '-KgjXsexQJEG-zFcR1aE'; //für testzwecke!
+  //TODO get actual chatID
+  // var chatID = '-KjEjimClcMXNV1DtGax'; //für testzwecke!
   var receiverIDjson = 'none';        //für testzwecke
   var status = pushMessageToFirebase(chatID,senderID,receiverIDjson,message.value);
   if (status) {
@@ -441,8 +474,9 @@ function initApp() {
       document.getElementById('new-post-button').style.display = 'none';
 
       //specify init view
-      displayKitaUpdates();
-      // displayChatView();
+      //TODO turn off in deploy
+      // displayKitaUpdates();
+      displayChats();
       // displayCalendar();
       // newEvent();
 
@@ -457,7 +491,6 @@ function initApp() {
 
   $('#email').val('e.scherlies@me.com');
 
-
   //Add Event Listenesrs
   // document.getElementById('signOutButton').addEventListener('click',signOut,false);
   document.getElementById('signInButton').addEventListener('click',signIn,false);
@@ -470,18 +503,13 @@ function initApp() {
     //Navigation Buttons
   document.getElementById('home-button').addEventListener('click',displayKitaUpdates,false);
   document.getElementById('calendar-button').addEventListener('click',displayCalendar,false);
-  document.getElementById('chat-button').addEventListener('click',displayChatView,false);
+  document.getElementById('chat-button').addEventListener('click',displayChats,false);
   document.getElementById('user-button').addEventListener('click',displayUser,false);
-  document.getElementById('message-send-button').addEventListener('click',sendMessage,false);
+  // document.getElementById('message-send-button').addEventListener('click',sendMessage,false);
   // document.getElementById('home-button').addEventListener('click',displayKitaUpdates,false);
 
   // $('#signInButton').on('click',signIn);
 }
-
-
-// $(document).ready(function() {
-// });
-
 
 window.onload = function() {
   initApp();

@@ -85,7 +85,7 @@ function newFamily() {
     <h1>Neue Familie</h1>
     <div class="row">
       <div class="col-2">Familienname</div>
-      <div class="col-10"><input type="text" class="form-control" id="familyName" value=""></div>
+      <div class="col-10"><input type="text" class="form-control" id="familyName" value="Fam ${Math.floor(Math.random()*1000)}"></div>
     </div>
     <hr>
     <h3>Elternteile:</h3>
@@ -108,7 +108,7 @@ function newFamily() {
 
 }
 
-function pushAdults(familyKey) {
+function pushAdults(familyKey, familyName) {
   // FUNCTION to set adult entries to db
   var count = 0
   var target = 'adult'
@@ -173,7 +173,7 @@ function pushAdults(familyKey) {
     let chatUsers = {}
     chatUsers = JSON.parse(JSON.stringify(adults))
     chatUsers[firebase.auth().currentUser.uid] = true
-    newChat(chatUsers)
+    newChat(chatUsers, familyName)
     return firebase.database().ref('/families/' + familyKey + '/adults/').set(adults)
   })
 }
@@ -216,7 +216,7 @@ function pushFamilyToFirebase(familyKey) {
 
   //push family base to firebase
   let p1 = firebase.database().ref().child('families/'+familyKey).set(family)
-  let p2 = pushAdults(familyKey)
+  let p2 = pushAdults(familyKey, familyName)
   let p3 = pushKids(familyKey)
 
   //wait for all to be sovled
@@ -231,7 +231,7 @@ function pushFamilyToFirebase(familyKey) {
 
 //initialize a new chat
 //users must be json containing { user1 : true, ... }
-function newChat(users) {
+function newChat(users, familyName) {
   //get new chat key
   var chatKey = firebase.database().ref('chats').push().key
 
@@ -244,6 +244,10 @@ function newChat(users) {
   //initialize chat with paticipants
   firebase.database().ref(`/chats/${chatKey}/users`).set(users)
 
+  //create chat name as familyName
+  //as for now: just take the familyname from DOM Element
+  firebase.database().ref(`/chats/${chatKey}/`).update({ familyName })
+
   //initialize welcome message
   let message = {
     content : `Willkommen im Chat View! Mitglieder sind ${JSON.stringify(users)}`,
@@ -254,7 +258,7 @@ function newChat(users) {
     //   receiverIDs
     //timestamp
   }
-  firebase.database().ref(`/chats/${chatKey}/messages`).set(message)
+  firebase.database().ref(`/chats/${chatKey}/messages`).push(message)
 
 }
 
