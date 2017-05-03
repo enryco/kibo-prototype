@@ -73,8 +73,8 @@ function addTemplate(target) {
 
   //prepare html
   var html = `<div class="row">
-    <div class="col-2">Vorname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Surname" value="${identifier}Surname"></div>
-    <div class="col-2">Nachname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Name" value="${identifier}Name"></div>
+    <div class="col-2">Vorname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Firstname" value="${identifier}Firstname"></div>
+    <div class="col-2">Nachname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Lastname" value="${identifier}Lastname"></div>
     ${email}
     </div>
     <br>`
@@ -120,17 +120,17 @@ function pushAdults(familyKey) {
 
   //iterate over adultTemplates
   //gather in neat JSON
-  while (document.getElementById(target+count+'Surname') !== null) {
+  while (document.getElementById(target+count+'Lastname') !== null) {
     let adultKey = firebase.database().ref().push().key
-    let surname = document.getElementById(target+count+'Surname').value
-    let name =  document.getElementById(target+count+'Name').value
+    let lastname = document.getElementById(target+count+'Lastname').value
+    let firstname =  document.getElementById(target+count+'Firstname').value
     let email = document.getElementById(target+count+'EMail').value
     var adult = {
-      surname,
-      name,
-      fullname : `${surname} ${name}`,
+      lastname,
+      firstname,
+      fullname : `${firstname} ${lastname}`,
       email,
-      family : { [familyKey] : true }
+      familyKey,
     }
 
     //create actual user w/ random pw
@@ -149,9 +149,17 @@ function pushAdults(familyKey) {
 
     //wait for newUser promis
     Promise.all([newUser]).then(function(proms){
+
+      //change users displayName
+      taube.auth().currentUser.updateProfile({ displayName : firstname }).then( _ =>  console.log('Username Changed'))
+
+      //make db entry of adult properties
       firebase.database().ref('/users/'+proms[0].uid).set(adult)
-      adults[proms[0].uid] = true //make list for family/adults
-      //delete user to allow smooth developement
+
+      //make list for family/adults
+      adults[proms[0].uid] = true
+
+      //delete user to allow smooth developement TODO: delete before deploy
       taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
 
     }).catch(function(error){
@@ -174,14 +182,14 @@ function pushKids(familyKey) {
   var count = 0
   var target = 'kid'
   var kids = {}
-  while (document.getElementById(target+count+'Surname') !== null) {
+  while (document.getElementById(target+count+'Lastname') !== null) {
     let newKey = firebase.database().ref().push().key
-    let surname = document.getElementById(target+count+'Surname').value
-    let name =  document.getElementById(target+count+'Name').value
+    let lastname = document.getElementById(target+count+'Lastname').value
+    let firstname =  document.getElementById(target+count+'Firstname').value
     let group = document.getElementById(target+count+'Group').value
     kids[newKey] = {
-      surname,
-      name,
+      lastname,
+      firstname,
       group
     }
     count += 1
