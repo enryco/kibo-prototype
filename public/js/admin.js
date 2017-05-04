@@ -115,6 +115,44 @@ function pushAdults(familyKey, familyName) {
   var adults = {}
   var callCenter = [] //use to gather all promisses from while loop
 
+  function createNewUser(email,firstname,lastname,familyKey) {
+    let adult = {
+      lastname,
+      firstname,
+      fullname : `${firstname} ${lastname}`,
+      email,
+      familyKey
+    }
+    //create actual user w/ random pw
+    //using second firebase app for signin up new user
+    let temporaryPassword = firebase.database().ref().push().key //use a key to set pw
+    let newUser = taube.auth().createUserWithEmailAndPassword(email, temporaryPassword).then(function(newUser) {
+
+      //change users displayName
+      taube.auth().currentUser.updateProfile({ displayName : firstname }).then( _ =>  console.log('Username Changed'))
+
+      //make db entry of adult properties
+      firebase.database().ref('/users/'+newUser.uid).set(adult)
+
+      //make list for family/adults
+      adults[newUser.uid] = true
+
+      //delete user to allow smooth developement
+      taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
+
+    }).catch(function(error) {
+      // Handle Errors here.
+      var errorCode = error.code
+      var errorMessage = error.message
+      console.log(error.message)
+      return false
+      // ...
+    });
+
+    //append newUser (Promise) to callCenter
+    callCenter.push(newUser)
+
+  }
   //iterate over adultTemplates
   //gather in neat JSON
   while (document.getElementById(target+count+'Lastname') !== null) {
@@ -122,61 +160,24 @@ function pushAdults(familyKey, familyName) {
     let lastname = document.getElementById(target+count+'Lastname').value
     let firstname =  document.getElementById(target+count+'Firstname').value
     let email = document.getElementById(target+count+'EMail').value
-    var adult = {
-      lastname,
-      firstname,
-      fullname : `${firstname} ${lastname}`,
-      email,
-      familyKey
-    }
 
-    //create actual user w/ random pw
-    //using second firebase app for signin up new user
-    let temporaryPassword = firebase.database().ref().push().key //use a key to set pw
-    let newUser = taube.auth().createUserWithEmailAndPassword(email, temporaryPassword).catch(function(error) {
-      // Handle Errors here.
-      var errorCode = error.code
-      var errorMessage = error.message
-      console.log(error.message)
-      // ...
-    });
-
-    //append newUser (Promise) to callCenter
-    callCenter.push(newUser)
-
-    //wait for newUser promis
-    Promise.all([newUser]).then(function(proms){
-
-      //change users displayName
-      taube.auth().currentUser.updateProfile({ displayName : firstname }).then( _ =>  console.log('Username Changed'))
-
-      //make db entry of adult properties
-      firebase.database().ref('/users/'+proms[0].uid).set(adult)
-
-      //make list for family/adults
-      adults[proms[0].uid] = true
-
-      //delete user to allow smooth developement TODO: delete before deploy
-      taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
-
-    }).catch(function(error){
-      taube.auth().currentUser.delete().then(function() {  console.log('User deleted due to an Error')     }, function(error) { /* An error happened. */ })
-      console.log(error.message)
-    })
-
+    createNewUser(email,firstname,lastname,familyKey)
     count += 1
   }
 
 
   //wait for everyone to have us called back
   Promise.all(callCenter).then(function(){
+    //sign last taube user out
+    taube.auth().signOut()
+
     //newChat TODO get chat out of this messy function
     let chatUsers = {}
     chatUsers = JSON.parse(JSON.stringify(adults))
     chatUsers[firebase.auth().currentUser.uid] = true
     newChat(chatUsers, familyName)
     return firebase.database().ref('/families/' + familyKey + '/adults/').set(adults)
-  })
+  }).catch(error => { console.log(error.message)} )
 }
 
 function pushKids(familyKey) {
