@@ -227,6 +227,16 @@ function getSenderName(senderID) {
   // return senderName;
 }
 
+//edit message
+function editMessage(chatId,messageId,content){
+  firebase.database().ref(`chats/${chatId}/messages/${messageId}`).update({ content, edit : true })
+}
+
+//delete message
+function deleteMessage(chatId,messageId) {
+  firebase.database().ref(`chats/${chatId}/messages/${messageId}`).set({})
+}
+
 //DiplayChat
 function displayChat(chatID) {
   cleanUpUI();
@@ -235,33 +245,43 @@ function displayChat(chatID) {
   document.getElementById('navbar-chat').style.display = '';
   //displayChats();
 
-  //display single Team Chat for Test-Phase
-  // var chatID = '-KjEjimClcMXNV1DtGax'
-  var chatRef = database.ref('/chats/' + chatID + '/messages').orderByKey();
-  chatRef.once('value').then( function(snapshot){
-    snapshot.forEach(function(childSnapshot){
-      let messageID = childSnapshot.key;
-      let content = childSnapshot.val().content;
+  //get sender names, and promises
+  var proms = []
+  var senderNames = {}
+  proms.push(database.ref(`/chats/${chatID}/users/`).once('value')
+    .then( snapshot => snapshot.forEach( childSnapshot => {
+      proms.push(database.ref(`/users/${childSnapshot.key}/`).once('value')
+        .then( userName => senderNames[childSnapshot.key] = userName.val().firstname )
+      )
+    })
+  )
+  )
 
-      //sender Name
-      let senderID = childSnapshot.val().sender;
-      let senderName = childSnapshot.val().senderName;
+  //wait for senderNames
+  //display messages
+  Promise.all(proms).then( _ => {
+    var chatRef = database.ref('/chats/' + chatID + '/messages').orderByKey();
+    chatRef.once('value').then( function(snapshot){
+      snapshot.forEach(function(childSnapshot){
+        let messageID = childSnapshot.key;
+        let content = childSnapshot.val().content;
 
-      // console.log(senderName)
-      //time
-      let timestamp = childSnapshot.val().timestamp;
-      let timeObj = new Date(timestamp);
-      time = timeObj.toLocaleString();
+        //sender Name
+        let senderID = childSnapshot.val().sender;
+        let senderName = senderNames[senderID];
 
-      let header = senderName + ' - ' + time;
-      let messageHTML = displayMessage(content,header);
+        //time
+        let timestamp = childSnapshot.val().timestamp;
+        let timeObj = new Date(timestamp);
+        time = timeObj.toLocaleString();
 
-      $('#pageContent').append(messageHTML);
-      // var header = senderName + ' - ' + time;
-      // var messageHTML = displayMessage(content,header);
-      // $('#pageContent').append(messageHTML);
-    });
-  });
+        let header = senderName + ' - ' + time;
+        let messageHTML = displayMessage(content,header);
+
+        $('#pageContent').append(messageHTML);
+      })//end for each
+    })//end .then
+  })
 
   document.getElementById('message-send-button').setAttribute('onclick',`sendMessage('${chatID}')`)
   $('body').css('padding-bottom','120px');
