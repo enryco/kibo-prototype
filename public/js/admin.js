@@ -118,7 +118,7 @@ function pushAdults(familyKey, familyName) {
   //iterate over adultTemplates
   //gather in neat JSON
   while (document.getElementById(target+count+'Lastname') !== null) {
-    let adultKey = firebase.database().ref().push().key
+    // let adultKey = firebase.database().ref().push().key
     let lastname = document.getElementById(target+count+'Lastname').value
     let firstname =  document.getElementById(target+count+'Firstname').value
     let email = document.getElementById(target+count+'EMail').value
@@ -137,7 +137,7 @@ function pushAdults(familyKey, familyName) {
       // Handle Errors here.
       var errorCode = error.code
       var errorMessage = error.message
-      alert(errorMessage)
+      console.log(error.message)
       // ...
     });
 
@@ -160,7 +160,8 @@ function pushAdults(familyKey, familyName) {
       taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
 
     }).catch(function(error){
-      alert(error.message)
+      taube.auth().currentUser.delete().then(function() {  console.log('User deleted due to an Error')     }, function(error) { /* An error happened. */ })
+      console.log(error.message)
     })
 
     count += 1
@@ -221,8 +222,8 @@ function pushFamilyToFirebase(familyKey) {
 
   //wait for all to be sovled
   Promise.all([p1, p2, p3]).then(function(){
-    cleanUpUI()
-    showFamilies()
+    // cleanUpUI()
+    // showFamilies()
   }).catch(function(e){
     console.log(e)
   })
@@ -238,7 +239,7 @@ function newChat(users, familyName) {
   //create participants JSON
   for (let key in users) {
     //add chat id to users/$uid/chats
-    firebase.database().ref(`/users/${key}/chats`).set({ [chatKey] : true })
+    firebase.database().ref(`/users/${key}/chats`).update({ [chatKey] : true })
   }
 
   //initialize chat with paticipants
@@ -249,17 +250,28 @@ function newChat(users, familyName) {
   firebase.database().ref(`/chats/${chatKey}/`).update({ familyName })
 
   //initialize welcome message
-  let message = {
-    content : `Willkommen im Chat View! Mitglieder sind ${JSON.stringify(users)}`,
-    sender : firebase.auth().currentUser.uid,
-    senderName : "Admin",
-    timestamp : firebase.database.ServerValue.TIMESTAMP
-    // receiver :
-    //   receiverIDs
-    //timestamp
+  var userNames = '<ul>'
+  var proms = []
+  for (let userId in users) {
+    let prom = firebase.database().ref(`/users/${userId}/`).once('value')
+      .then( snapshot => {
+        userNames += `<li>${snapshot.val().fullname}</li>`
+      })
+      proms.push(prom)
   }
-  firebase.database().ref(`/chats/${chatKey}/messages`).push(message)
-
+  Promise.all(proms).then( proms => {
+    userNames += '</ul>'
+    let message = {
+      content : `Willkommen im Chat View! Mitglieder sind ${userNames}`,
+      sender : firebase.auth().currentUser.uid,
+      senderName : "Admin",
+      timestamp : firebase.database.ServerValue.TIMESTAMP
+      // receiver :
+      //   receiverIDs
+      //timestamp
+    }
+    firebase.database().ref(`/chats/${chatKey}/messages`).push(message)
+  })
 }
 
 
