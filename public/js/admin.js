@@ -223,8 +223,8 @@ function pushFamilyToFirebase(familyKey) {
 
   //wait for all to be sovled
   Promise.all([p1, p2, p3]).then(function(){
-    // cleanUpUI()
-    // showFamilies()
+    cleanUpUI()
+    showFamilies()
   }).catch(function(e){
     console.log(e)
   })
