@@ -158,7 +158,6 @@ function addTemplate(target) {
 
 }//end addTemplate
 
-
 function newFamily() {
   cleanUpUI(false)
   var html = `
@@ -353,8 +352,6 @@ function newChat(users, familyName) {
   })
 }
 
-
-
 /********************
 Splash Screen Functions
 *********************/
@@ -375,7 +372,6 @@ function signOut() {
     //$('#output').append('<br>User is signed-Out');
   };
 }
-
 
 // Sign-In Fucntion
 function signIn() {
@@ -400,7 +396,6 @@ function signIn() {
   }
 }
 
-
 /*************************
 APP FUNCTIONS
 ************************/
@@ -421,7 +416,6 @@ function cleanUpUI(startPage) {
     }
 }
 
-
 //App initialization - fires everytime the document is load
 function initApp() {
   firebase.auth().onAuthStateChanged(function(user) {
@@ -435,10 +429,8 @@ function initApp() {
       var uid = user.uid;
       var providerData = user.providerData;
 
-
       document.getElementById('login-screen').style.display = 'none'; //Hide login ccreen if user is signed-In
       document.getElementById('main-view').style.display = '';
-      // document.getElementById('navbar-view').style.display = '';
 
       //load home view with family DB
       cleanUpUI(true)
@@ -447,7 +439,7 @@ function initApp() {
       // User is signed out.
       document.getElementById('login-screen').style.display = ''; //Show login screen if user is signed-Out
       document.getElementById('main-view').style.display = 'none';
-      // document.getElementById('navbar-view').style.display = 'none';
+
     } //end if
   }); //end of mehtod
 
@@ -460,14 +452,7 @@ function initApp() {
   document.getElementById('signInButton').addEventListener('click',signIn,false);
   document.getElementById('newFamily').addEventListener('click',newFamily,false);
   document.getElementById('newGroup').addEventListener('click',newGroup,false);
-
-  // $('#signInButton').on('click',signIn);
 }
-
-
-// $(document).ready(function() {
-// });
-
 
 window.onload = function() {
   initApp();

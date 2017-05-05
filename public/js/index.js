@@ -5,10 +5,21 @@
 
 */
 
+// Initialize Firebase
+var config = {
+  apiKey: "AIzaSyC4MrEMoGv3oB5s-QOL_0EgmDiCdSCznqc",
+  authDomain: "kita-app-48708.firebaseapp.com",
+  databaseURL: "https://kita-app-48708.firebaseio.com",
+  storageBucket: "kita-app-48708.appspot.com",
+  messagingSenderId: "994027603927"
+};
+firebase.initializeApp(config);
+
 //shortcuts
 //var pageContent = document.getElementById('pageContent');
 var database = firebase.database();
 // var kitaRef =
+
 
 /*************************
   CURATOR - NEW Post
@@ -75,6 +86,7 @@ function displayPost(title, preview, target, id) {
   return post;
 }
 
+
 /****************************
   KITA UPDATES
   ***************************/
@@ -123,11 +135,10 @@ function displayKitaUpdates() {
 
 }
 
+
 /********************
  CALENDAR
  *********************/
-
-
 
  //Create New Event
  function newEvent() {
@@ -351,7 +362,6 @@ function pushMessageToFirebase(chatID, senderID, receiverIDs, message) {
   return true; //implement firebase method to validate made db entries
 }
 
-
 function sendMessage(chatID) {
   //
   var senderID = firebase.auth().currentUser.uid; //get user id
@@ -430,7 +440,6 @@ function signOut() {
   };
 }
 
-
 // Sign-In Fucntion
 function signIn() {
   var user = firebase.auth().currentUser
@@ -472,7 +481,6 @@ function cleanUpUI() {
   document.getElementById('new-event-button').style.display = 'none';
 
 }
-
 
 //App initialization - fires everytime the document is load
 function initApp() {
