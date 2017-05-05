@@ -20,14 +20,56 @@ Show Family DB Tree
 *********************/
 
 function showFamilies() {
-  cleanUpUI()
   firebase.database().ref('families/').once('value').then(function(snapshot){
     snapshot.forEach(function(childSnapshot){
       let familyTemplate = `<p>- ${childSnapshot.val().name}</p>`
-      $('#pageContent').append(familyTemplate)
+      $('#newFamily').before(familyTemplate)
     })
   })
 }
+
+/********************
+New Group
+*********************/
+
+function newGroup() {
+  //display newGroup UI
+  cleanUpUI(false);
+  let option =
+  `<div class="row">
+    <div class="col-2">Gruppenname</div><div class="col-10 col-lg-4 col-xl-4"><input type="text" class="form-control" id="groupName" value=""></div>
+    </div>
+    <br>
+    <button class="btn btn-success" role="button" id="done" onclick="newGroup.push()"><i class="fa fa-check"></i> Fertig</button>
+    <button class="btn btn-danger" role="button" id="" onclick="cleanUpUI(true)"><i class="fa fa-times"></i> Abbrechen</button>`
+  $('#pageContent').html(option)
+
+  //function to push new Gruop to DB
+  function push() {
+    //disable send button to prevent another send click
+    document.getElementById('done').disabled = true
+
+    //get Group name
+    let name = document.getElementById('groupName').value
+
+    //push to database
+    database.ref(`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
+    .then( snapshot => {
+      snapshot.forEach( cS => {
+        let daycareKey = cS.key
+        database.ref(`daycares/${daycareKey}/groups`).push({name})
+      })//end for each
+    })//end then
+    cleanUpUI(true)
+  }
+  newGroup.push = push
+}
+
+function selectGroup(identifier,groupKey,groupName) {
+  let groupElement = document.getElementById(identifier + 'Group')
+  groupElement.value = groupName
+  groupElement.setAttribute('groupkey',groupKey)
+}//end selectGroup
 
 /********************
 New Family
@@ -51,27 +93,45 @@ function addTemplate(target) {
   //TODO: before deploy, change values to ''
   var option = ''
   if (target != 'kid') {
-    option = `<div class="col-2">E-Mail</div><div class="col-10"><input type="text" class="${identifier} form-control" id="${identifier}EMail" value="testUser${count}@enricoscherlies.de"></div>`
+    option = `
+    <div class="row">
+      <div class="col-2">E-Mail</div>
+      <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier} form-control" id="${identifier}EMail" value="testUser${count}@enricoscherlies.de"></div>
+    </div>`
   } else {
-    option = `<div class="col-2">Gruppe</div><div class="col-6"><input type="text" class="${identifier} form-control" id="${identifier}Group" value="" disabled></div>
-    <div class="btn-group col-4">
-    <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-    Gruppe...
-    </button>
-    <div class="dropdown-menu dropdown-groups-${identifier}">
-    <div class="dropdown-divider"></div>
-    <button class="dropdown-item" href="#" onclick="">Neue Gruppe</button>
-    </div>
+    option =
+    `<div class="row">
+      <div class="col-2">Gruppe</div>
+      <div class="col-10 col-lg-4 col-xl-4">
+        <div class="input-group">
+          <input type="text" class="${identifier} form-control" id="${identifier}Group" value="" disabled>
+          <div class="btn-group">
+            <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Gruppe...
+            </button>
+            <div class="dropdown-menu dropdown-groups-${identifier}">
+              <!--
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" href="#" onclick="">Neue Gruppe</button> -->
+            </div>
+          </div>
+        </div>
+      </div>
     </div>`
 
   }
 
   //prepare html
-  var html = `<div class="row">
-  <div class="col-2">Vorname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Firstname" value="${identifier}Firstname"></div>
-  <div class="col-2">Nachname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Lastname" value="${identifier}Lastname"></div>
-  ${option}
+  var html =
+  `<div class="row">
+    <div class="col-2">Vorname</div>
+    <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier}   form-control" id="${identifier}Firstname" value="${identifier}Firstname"></div>
   </div>
+  <div class="row">
+    <div class="col-2">Nachname</div>
+    <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier}   form-control" id="${identifier}Lastname" value="${identifier}Lastname"></div>
+  </div>
+  ${option}
   <br>`
 
   $(template).append(html)
@@ -98,18 +158,14 @@ function addTemplate(target) {
 
 }//end addTemplate
 
-function selectGroup(identifier,groupKey,groupName) {
-  let groupElement = document.getElementById(identifier + 'Group')
-  groupElement.value = groupName
-  groupElement.setAttribute('groupkey',groupKey)
-}//end selectGroup
 
 function newFamily() {
+  cleanUpUI(false)
   var html = `
   <h1>Neue Familie</h1>
   <div class="row">
   <div class="col-2">Familienname</div>
-  <div class="col-10"><input type="text" class="form-control" id="familyName" value="Fam ${Math.floor(Math.random()*1000)}"></div>
+  <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="form-control" id="familyName" value="Fam ${Math.floor(Math.random()*1000)}"></div>
   </div>
   <hr>
   <h3>Elternteile:</h3>
@@ -123,12 +179,11 @@ function newFamily() {
   <button class="btn btn-primary" role="button" id="" onclick="addTemplate('kid')"><i class="fa fa-plus"></i> Kind</button>
   <hr>
   <button class="btn btn-success" role="button" id="done" onclick="pushFamilyToFirebase()"><i class="fa fa-check"></i> Fertig</button>
-  <button class="btn btn-danger" role="button" id="done" onclick="cleanUpUI()"><i class="fa fa-times"></i> Abbrechen</button>
+  <button class="btn btn-danger" role="button" id="" onclick="cleanUpUI(true)"><i class="fa fa-times"></i> Abbrechen</button>
   `
-  $('#newFamilyTarget').html(html)
+  $('#pageContent').html(html)
   addTemplate('adult')
   addTemplate('kid')
-  document.getElementById('pageContent').style.display = 'none'
 
 }
 
@@ -247,8 +302,7 @@ function pushFamilyToFirebase(familyKey) {
 
   //wait for all to be sovled
   Promise.all([p1, p2, p3]).then(function(){
-    cleanUpUI()
-    showFamilies()
+    cleanUpUI(true)
   }).catch(function(e){
     console.log(e)
   })
@@ -352,10 +406,19 @@ APP FUNCTIONS
 ************************/
 
 //Clean Up Page Content
-function cleanUpUI() {
-  document.getElementById('pageContent').style.display = ''
-  $('#newFamilyTarget').html('')
-  $('#pageContent').html('<h3>Familien in der Datenbank:</h3>')
+function cleanUpUI(startPage) {
+
+  $('#pageContent').html('')
+  switch(startPage) {
+    case true :
+      document.getElementById('startPage').style.display = ''
+      showFamilies()
+      break
+    case false :
+      document.getElementById('startPage').style.display = 'none'
+    default: break
+
+    }
 }
 
 
@@ -378,7 +441,7 @@ function initApp() {
       // document.getElementById('navbar-view').style.display = '';
 
       //load home view with family DB
-      showFamilies()
+      cleanUpUI(true)
 
     } else {
       // User is signed out.
@@ -396,6 +459,7 @@ function initApp() {
   document.getElementById('signOutButton').addEventListener('click',signOut,false);
   document.getElementById('signInButton').addEventListener('click',signIn,false);
   document.getElementById('newFamily').addEventListener('click',newFamily,false);
+  document.getElementById('newGroup').addEventListener('click',newGroup,false);
 
   // $('#signInButton').on('click',signIn);
 }
