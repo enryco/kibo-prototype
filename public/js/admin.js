@@ -16,8 +16,8 @@ var taube = firebase.initializeApp(config, 'taube');
 var database = firebase.database();
 
 /********************
-  Show Family DB Tree
-  *********************/
+Show Family DB Tree
+*********************/
 
 function showFamilies() {
   cleanUpUI()
@@ -30,8 +30,8 @@ function showFamilies() {
 }
 
 /********************
-  New Family
-  *********************/
+New Family
+*********************/
 
 function addTemplate(target) {
   // target = kid || adult
@@ -49,58 +49,82 @@ function addTemplate(target) {
   //if target = child -> no email
   //TODO: change var email to an general name like thirdField
   //TODO: before deploy, change values to ''
-  var email = ''
+  var option = ''
   if (target != 'kid') {
-    email = `<div class="col-2">E-Mail</div><div class="col-10"><input type="text" class="${identifier} form-control" id="${identifier}EMail" value="testUser${count}@enricoscherlies.de"></div>`
+    option = `<div class="col-2">E-Mail</div><div class="col-10"><input type="text" class="${identifier} form-control" id="${identifier}EMail" value="testUser${count}@enricoscherlies.de"></div>`
   } else {
-    email = `<div class="col-2">Gruppe</div><div class="col-6"><input type="text" class="${identifier} form-control" id="${identifier}Group" value="" disabled></div>
+    option = `<div class="col-2">Gruppe</div><div class="col-6"><input type="text" class="${identifier} form-control" id="${identifier}Group" value="" disabled></div>
     <div class="btn-group col-4">
-      <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Gruppe...
-     </button>
-     <div class="dropdown-menu">
-       <button class="dropdown-item" href="#" onclick="(function(){ document.getElementById('${identifier}Group').value = 'Gruppe 1'})()">Gruppe 1</button>
-       <button class="dropdown-item" href="#">Gruppe 2</button>
-       <button class="dropdown-item" href="#">Gruppe 3</button>
-       <div class="dropdown-divider"></div>
-       <button class="dropdown-item" href="#">Neue Gruppe</button>
-     </div>
+    <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Gruppe...
+    </button>
+    <div class="dropdown-menu dropdown-groups-${identifier}">
+    <div class="dropdown-divider"></div>
+    <button class="dropdown-item" href="#" onclick="">Neue Gruppe</button>
+    </div>
     </div>`
+
   }
 
   //prepare html
   var html = `<div class="row">
-    <div class="col-2">Vorname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Firstname" value="${identifier}Firstname"></div>
-    <div class="col-2">Nachname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Lastname" value="${identifier}Lastname"></div>
-    ${email}
-    </div>
-    <br>`
+  <div class="col-2">Vorname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Firstname" value="${identifier}Firstname"></div>
+  <div class="col-2">Nachname</div><div class="col-10"><input type="text" class="${identifier}   form-control" id="${identifier}Lastname" value="${identifier}Lastname"></div>
+  ${option}
+  </div>
+  <br>`
 
   $(template).append(html)
-  return html
-}
+
+  if (target == 'kid') {
+    database.ref(`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
+    .then( snapshot => {
+      snapshot.forEach( cS => {
+        let daycareKey = cS.key
+        database.ref(`daycares/${daycareKey}/groups`).once("value")
+        .then( snapshot2 => {
+          console.log(snapshot2.key)
+          snapshot2.forEach( cs2 => {
+            console.log(cs2.val().name)
+            let groupKey = cs2.key
+            let groupName = cs2.val().name
+            let button = `<button class="dropdown-item" href="#" onclick="selectGroup('${identifier}','${groupKey}','${groupName}')">${groupName}</button>`
+            $('.dropdown-groups-'+identifier).prepend(button)
+          })//end forEach
+        })//end then
+      })//end for each
+    })//end then
+  }//end if
+
+}//end addTemplate
+
+function selectGroup(identifier,groupKey,groupName) {
+  let groupElement = document.getElementById(identifier + 'Group')
+  groupElement.value = groupName
+  groupElement.setAttribute('groupkey',groupKey)
+}//end selectGroup
 
 function newFamily() {
   var html = `
-    <h1>Neue Familie</h1>
-    <div class="row">
-      <div class="col-2">Familienname</div>
-      <div class="col-10"><input type="text" class="form-control" id="familyName" value="Fam ${Math.floor(Math.random()*1000)}"></div>
-    </div>
-    <hr>
-    <h3>Elternteile:</h3>
-    <div class="adultTemplates" id="adultTemplates">
-    </div>
-    <button class="btn btn-primary" role="button" id="newFamily" onclick="addTemplate('adult')"><i class="fa fa-plus"></i> Elternteil</button>
-    <hr>
-    <h3>Kind(er)</h3>
-    <div class="childTemplates" id="kidTemplates">
-    </div>
-    <button class="btn btn-primary" role="button" id="" onclick="addTemplate('kid')"><i class="fa fa-plus"></i> Kind</button>
-    <hr>
-    <button class="btn btn-success" role="button" id="done" onclick="pushFamilyToFirebase()"><i class="fa fa-check"></i> Fertig</button>
-    <button class="btn btn-danger" role="button" id="done" onclick="cleanUpUI()"><i class="fa fa-times"></i> Abbrechen</button>
-    `
+  <h1>Neue Familie</h1>
+  <div class="row">
+  <div class="col-2">Familienname</div>
+  <div class="col-10"><input type="text" class="form-control" id="familyName" value="Fam ${Math.floor(Math.random()*1000)}"></div>
+  </div>
+  <hr>
+  <h3>Elternteile:</h3>
+  <div class="adultTemplates" id="adultTemplates">
+  </div>
+  <button class="btn btn-primary" role="button" id="newFamily" onclick="addTemplate('adult')"><i class="fa fa-plus"></i> Elternteil</button>
+  <hr>
+  <h3>Kind(er)</h3>
+  <div class="childTemplates" id="kidTemplates">
+  </div>
+  <button class="btn btn-primary" role="button" id="" onclick="addTemplate('kid')"><i class="fa fa-plus"></i> Kind</button>
+  <hr>
+  <button class="btn btn-success" role="button" id="done" onclick="pushFamilyToFirebase()"><i class="fa fa-check"></i> Fertig</button>
+  <button class="btn btn-danger" role="button" id="done" onclick="cleanUpUI()"><i class="fa fa-times"></i> Abbrechen</button>
+  `
   $('#newFamilyTarget').html(html)
   addTemplate('adult')
   addTemplate('kid')
@@ -255,10 +279,10 @@ function newChat(users, familyName) {
   var proms = []
   for (let userId in users) {
     let prom = firebase.database().ref(`/users/${userId}/`).once('value')
-      .then( snapshot => {
-        userNames += `<li>${snapshot.val().fullname}</li>`
-      })
-      proms.push(prom)
+    .then( snapshot => {
+      userNames += `<li>${snapshot.val().fullname}</li>`
+    })
+    proms.push(prom)
   }
   Promise.all(proms).then( proms => {
     userNames += '</ul>'
@@ -278,8 +302,8 @@ function newChat(users, familyName) {
 
 
 /********************
-  Splash Screen Functions
-  *********************/
+Splash Screen Functions
+*********************/
 
 //Sign-Out Function
 function signOut() {
@@ -324,8 +348,8 @@ function signIn() {
 
 
 /*************************
-  APP FUNCTIONS
-  ************************/
+APP FUNCTIONS
+************************/
 
 //Clean Up Page Content
 function cleanUpUI() {
