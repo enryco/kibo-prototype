@@ -23,7 +23,7 @@ function showFamilies() {
   firebase.database().ref('families/').once('value').then(function(snapshot){
     snapshot.forEach(function(childSnapshot){
       let familyTemplate = `<p>- ${childSnapshot.val().name}</p>`
-      $('#newFamily').before(familyTemplate)
+      $('#families').append(familyTemplate)
     })
   })
 }
@@ -402,8 +402,10 @@ APP FUNCTIONS
 
 //Clean Up Page Content
 function cleanUpUI(startPage) {
-
   $('#pageContent').html('')
+  $('#families').html('')
+  $('#groups').html('')
+
   switch(startPage) {
     case true :
       document.getElementById('startPage').style.display = ''
