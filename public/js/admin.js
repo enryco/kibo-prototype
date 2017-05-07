@@ -25,13 +25,6 @@ Show Family and Group DB Tree
 *********************/
 
 function showFamilies() {
-  //show families
-  // firebase.database().ref('families/').once('value').then(function(snapshot){
-  //   snapshot.forEach(function(childSnapshot){
-  //     let familyTemplate = `<li>${childSnapshot.val().name}</li>`
-  //     $('#families').append(familyTemplate)
-  //   })
-  // })
 
   //show groups
   database.ref(`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
@@ -235,14 +228,14 @@ function pushAdults(familyKey, familyName) {
     }
     //create actual user w/ random pw
     //using second firebase app for signin up new user
-    let temporaryPassword = firebase.database().ref().push().key //use a key to set pw
+    let temporaryPassword = database.ref().push().key //use a key to set pw
     let newUser = taube.auth().createUserWithEmailAndPassword(email, temporaryPassword).then(function(newUser) {
 
       //change users displayName
       taube.auth().currentUser.updateProfile({ displayName : firstname }).then( _ =>  console.log('Username Changed'))
 
       //make db entry of adult properties
-      firebase.database().ref('/users/'+newUser.uid).set(adult)
+      database.ref('/users/'+newUser.uid).set(adult)
 
       //make list for family/adults
       adults[newUser.uid] = true
@@ -266,7 +259,7 @@ function pushAdults(familyKey, familyName) {
   //iterate over adultTemplates
   //gather in neat JSON
   while (document.getElementById(target+count+'Lastname') !== null) {
-    // let adultKey = firebase.database().ref().push().key
+    // let adultKey = database.ref().push().key
     let lastname = document.getElementById(target+count+'Lastname').value
     let firstname =  document.getElementById(target+count+'Firstname').value
     let email = document.getElementById(target+count+'EMail').value
@@ -286,7 +279,7 @@ function pushAdults(familyKey, familyName) {
     chatUsers = JSON.parse(JSON.stringify(adults))
     chatUsers[firebase.auth().currentUser.uid] = true
     newChat(chatUsers, familyName)
-    return firebase.database().ref('/families/' + familyKey + '/adults/').set(adults)
+    return database.ref('/families/' + familyKey + '/adults/').set(adults)
   }).catch(error => { console.log(error.message)} )
 }
 
@@ -297,7 +290,7 @@ function pushKids(familyKey) {
   var target = 'kid'
   var kids = {}
   while (document.getElementById(target+count+'Lastname') !== null) {
-    let newKey = firebase.database().ref().push().key
+    let newKey = database.ref().push().key
     let lastname = document.getElementById(target+count+'Lastname').value
     let firstname =  document.getElementById(target+count+'Firstname').value
     let group = document.getElementById(target+count+'Group').value
@@ -308,7 +301,7 @@ function pushKids(familyKey) {
     }
     count += 1
   }
-  return firebase.database().ref().child('families/' + familyKey + '/kids').set(kids)
+  return database.ref().child('families/' + familyKey + '/kids').set(kids)
 }
 
 function pushFamilyToFirebase(familyKey) {
@@ -317,7 +310,7 @@ function pushFamilyToFirebase(familyKey) {
 
   //if no key is provided, generate new family key
   if (familyKey === undefined) {
-    var familyKey = firebase.database().ref().child('families').push().key
+    var familyKey = database.ref().child('families').push().key
   }
   var familyName = document.getElementById('familyName').value
   //write familyname to family entry
@@ -352,26 +345,26 @@ function pushFamilyToFirebase(familyKey) {
 //users must be json containing { user1 : true, ... }
 function newChat(users, familyName) {
   //get new chat key
-  var chatKey = firebase.database().ref('chats').push().key
+  var chatKey = database.ref('chats').push().key
 
   //create participants JSON
   for (let key in users) {
     //add chat id to users/$uid/chats
-    firebase.database().ref(`/users/${key}/chats`).update({ [chatKey] : true })
+    database.ref(`/users/${key}/chats`).update({ [chatKey] : true })
   }
 
   //initialize chat with paticipants
-  firebase.database().ref(`/chats/${chatKey}/users`).set(users)
+  database.ref(`/chats/${chatKey}/users`).set(users)
 
   //create chat name as familyName
   //as for now: just take the familyname from DOM Element
-  firebase.database().ref(`/chats/${chatKey}/`).update({ familyName })
+  database.ref(`/chats/${chatKey}/`).update({ familyName })
 
   //initialize welcome message
   var userNames = '<ul>'
   var proms = []
   for (let userId in users) {
-    let prom = firebase.database().ref(`/users/${userId}/`).once('value')
+    let prom = database.ref(`/users/${userId}/`).once('value')
     .then( snapshot => {
       let name = snapshot.val().fullname ? snapshot.val().fullname : snapshot.val().firstname
       console.log(name)
@@ -390,7 +383,7 @@ function newChat(users, familyName) {
       //   receiverIDs
       //timestamp
     }
-    firebase.database().ref(`/chats/${chatKey}/messages`).push(message)
+    database.ref(`/chats/${chatKey}/messages`).push(message)
   })
 }
 

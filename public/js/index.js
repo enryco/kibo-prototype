@@ -240,12 +240,12 @@ function getSenderName(senderID) {
 
 //edit message
 function editMessage(chatId,messageId,content){
-  firebase.database().ref(`chats/${chatId}/messages/${messageId}`).update({ content, edit : true })
+  database.ref(`chats/${chatId}/messages/${messageId}`).update({ content, edit : true })
 }
 
 //delete message
 function deleteMessage(chatId,messageId) {
-  firebase.database().ref(`chats/${chatId}/messages/${messageId}`).set({})
+  database.ref(`chats/${chatId}/messages/${messageId}`).set({})
 }
 
 //DiplayChat
