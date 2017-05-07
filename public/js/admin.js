@@ -15,17 +15,49 @@ var taube = firebase.initializeApp(config, 'taube');
 //var pageContent = document.getElementById('pageContent');
 var database = firebase.database();
 
+//update an user
+function updateUser(uid, attributesObj){
+  database.ref('users/'+uid).update(attributesObj)
+}
+
 /********************
-Show Family DB Tree
+Show Family and Group DB Tree
 *********************/
 
 function showFamilies() {
-  firebase.database().ref('families/').once('value').then(function(snapshot){
-    snapshot.forEach(function(childSnapshot){
-      let familyTemplate = `<p>- ${childSnapshot.val().name}</p>`
-      $('#families').append(familyTemplate)
-    })
-  })
+  //show families
+  // firebase.database().ref('families/').once('value').then(function(snapshot){
+  //   snapshot.forEach(function(childSnapshot){
+  //     let familyTemplate = `<li>${childSnapshot.val().name}</li>`
+  //     $('#families').append(familyTemplate)
+  //   })
+  // })
+
+  //show groups
+  database.ref(`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
+  .then( daycares => {
+    daycares.forEach( daycare => {
+
+      //show groups
+      database.ref(`daycares/${daycare.key}/groups`).once('value')
+        .then( groups => {
+          groups.forEach( group => {
+            let listElement = `<li>${group.val().name}</li>`
+            $('#groups').append(listElement)
+          })
+        })
+
+      //show famillies
+      database.ref(`daycares/${daycare.key}/families`).once('value')
+        .then( families => {
+          families.forEach( family => {
+            let listElement = `<li>${family.val().name}</li>`
+            $('#families').append(listElement)
+          })
+        })
+    })//end for each
+  })//end then
+
 }
 
 /********************
@@ -295,7 +327,15 @@ function pushFamilyToFirebase(familyKey) {
   }
 
   //push family base to firebase
-  let p1 = firebase.database().ref().child('families/'+familyKey).set(family)
+  //to daycare ref
+  database.ref(`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
+  .then( daycares => {
+    daycares.forEach( daycare => {
+      //show famillies
+      database.ref(`daycares/${daycare.key}/families/${familyKey}`).set(family)
+    })//end for each
+  })//end then
+  let p1 = database.ref().child('families/'+familyKey).set(family)
   let p2 = pushAdults(familyKey, familyName)
   let p3 = pushKids(familyKey)
 
@@ -333,7 +373,9 @@ function newChat(users, familyName) {
   for (let userId in users) {
     let prom = firebase.database().ref(`/users/${userId}/`).once('value')
     .then( snapshot => {
-      userNames += `<li>${snapshot.val().fullname}</li>`
+      let name = snapshot.val().fullname ? snapshot.val().fullname : snapshot.val().firstname
+      console.log(name)
+      userNames += `<li>${name}</li>`
     })
     proms.push(prom)
   }
