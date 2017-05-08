@@ -32,7 +32,7 @@
 <!-- <script src="https://cdn.ckeditor.com/4.6.2/standard/ckeditor.js"></script> -->
 </head>
 
-<body>
+<body style="">
 
 
 
@@ -71,21 +71,24 @@
     <!-- MAIN VIEW -->
     <div class="" style="display:none" id="main-view">
 
-      <nav class="navbar fixed-top navbar-light bg-faded" id="main-view-navbar">
-        <div class="row">
-          <div class="col-4">
-            <div class="navbar-item" href="#">
-              <a class="btn btn-primary pull-left" href="#" type="" style="display:none" role="" id="backButton" onclick=""><i class="fa fa-arrow-left" aria-hidden="true"></i></a>
+        <nav class="navbar fixed-top navbar-light bg-faded" id="main-view-navbar">
+          <div class="container">
+            <div class="row">
+              <div class="col-4">
+                <div class="navbar-item" href="#">
+                  <a class="btn btn-primary pull-left" href="#" type="" style="display:none" role="" id="backButton" onclick=""><i class="fa fa-arrow-left" aria-hidden="true"></i></a>
+                </div>
+              </div>
+              <div class="col-4 text-center">
+                <h1 class="navbar-brand mb-0" id="pageTitle">pageTitle</h1>
+              </div>
+              <div class="col-4">
+                <a class="btn btn-primary pull-right invisible" href="#" type="" role="" id="newEntry" style="display:none" onclick=""><i class="fa fa-plus" aria-hidden="true"></i></a>
+              </div>
             </div>
           </div>
-          <div class="col-4 text-center">
-            <h1 class="navbar-brand mb-0" id="pageTitle">pageTitle</h1>
-          </div>
-          <div class="col-4">
-            <a class="btn btn-primary pull-right invisible" href="#" type="" role="" id="newEntry" style="display:none" onclick=""><i class="fa fa-plus" aria-hidden="true"></i></a>
-          </div>
-        </div>
-      </nav>
+        </nav>
+
 
       <!-- New Post -->
       <div class="" id="new-post" style="display:none">
