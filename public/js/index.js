@@ -484,6 +484,16 @@ function signIn() {
   }
 }
 
+function resetPassword() {
+  var email = document.getElementById('email').value;
+  firebase.auth().sendPasswordResetEmail(email).then(function() {
+    // Email sent.
+    alert('Mail ist raus! :)')
+  }, function(error) {
+    alert(error)
+  });
+}
+
 /*************************
   Load Admin Script
   ************************/

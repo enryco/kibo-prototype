@@ -112,7 +112,7 @@ function newGroup() {
   cleanUpUI();
   let option =
   `<div class="row">
-    <div class="col-2">Gruppenname</div><div class="col-10 col-lg-4 col-xl-4"><input type="text" class="form-control" id="groupName" value=""></div>
+    <div class="col-2">Gruppenname</div><div class="col-10 col-lg-4 col-xl-4"><input type="text" class="form-control family" id="groupName" value=""></div>
     </div>
     <br>
     <button class="btn btn-success" role="button" id="done" onclick="newGroup.push()"><i class="fa fa-check"></i> Fertig</button>
@@ -174,7 +174,7 @@ function addTemplate(target) {
     option = `
     <div class="row">
       <div class="col-2">E-Mail</div>
-      <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier} form-control" id="${identifier}EMail" value="testUser${count}@enricoscherlies.de"></div>
+      <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier} form-control family email" id="${identifier}EMail" value="testUser${count}@enricoscherlies.de"></div>
     </div>`
   } else {
     option =
@@ -182,7 +182,7 @@ function addTemplate(target) {
       <div class="col-2">Gruppe</div>
       <div class="col-10 col-lg-4 col-xl-4">
         <div class="input-group">
-          <input type="text" class="${identifier} form-control" id="${identifier}Group" value="" disabled>
+          <input type="text" class="${identifier} form-control family" id="${identifier}Group" value="" disabled>
           <div class="btn-group">
             <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             Gruppe...
@@ -203,11 +203,11 @@ function addTemplate(target) {
   var html =
   `<div class="row">
     <div class="col-2">Vorname</div>
-    <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier}   form-control" id="${identifier}Firstname" value="${identifier}Firstname"></div>
+    <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier}   form-control family" id="${identifier}Firstname" value="${identifier}Firstname"></div>
   </div>
   <div class="row">
     <div class="col-2">Nachname</div>
-    <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier}   form-control" id="${identifier}Lastname" value="${identifier}Lastname"></div>
+    <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier}   form-control family" id="${identifier}Lastname" value="${identifier}Lastname"></div>
   </div>
   ${option}
   <br>`
@@ -242,7 +242,7 @@ function newFamily() {
   <h1>Neue Familie</h1>
   <div class="row">
   <div class="col-2">Familienname</div>
-  <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="form-control" id="familyName" value="Fam ${Math.floor(Math.random()*1000)}"></div>
+  <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="form-control family" id="familyName" value="Fam ${Math.floor(Math.random()*1000)}"></div>
   </div>
   <hr>
   <h3>Elternteile:</h3>
@@ -292,6 +292,13 @@ function pushAdults(familyKey, familyName) {
 
       //make list for family/adults
       adults[newUser.uid] = true
+
+      //send reset-password mail
+      taube.auth().sendPasswordResetEmail(email).then(function() {
+        // Email sent.
+      }, function(error) {
+        // An error happened.
+      });
 
       //delete user to allow smooth developement
       taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
@@ -358,6 +365,28 @@ function pushKids(familyKey) {
 }
 
 function pushFamilyToFirebase(familyKey) {
+
+  //check wether inputs are filled
+  let inputFields = document.getElementsByClassName('family')
+  for (let i=0;i<inputFields.length;i++) {
+    if(inputFields[i].value == false || '' || undefined || null){
+      return alert('Bitte alle Felder ausfüllen')
+    }
+  }
+
+  //check wether email inputs are good formated
+  function checkMail(email) {
+    var regexEmailFormat = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3}$/;
+    return regexEmailFormat.test(email)
+  }
+  let emails = document.getElementsByClassName('email')
+  for (let i=0;i<emails.length;i++){
+    let email = emails[i].value
+    if(!checkMail(email)) {
+      return alert(`E-Mail "${email}" ist falsch formatiert.`)
+    }
+  }
+
   //first, disable button to prevent multiple pushes
   document.getElementById('done').disabled = true
 
@@ -420,7 +449,6 @@ function newChat(users, familyName) {
     let prom = database.ref(devRef+`/users/${userId}/`).once('value')
     .then( snapshot => {
       let name = snapshot.val().fullname ? snapshot.val().fullname : snapshot.val().firstname
-      console.log(name)
       userNames += `<li>${name}</li>`
     })
     proms.push(prom)
@@ -428,7 +456,7 @@ function newChat(users, familyName) {
   Promise.all(proms).then( proms => {
     userNames += '</ul>'
     let message = {
-      content : `Willkommen im Chat! Mitglieder sind ${userNames}`,
+      content : `👋 Willkommen im Chat! Mitglieder sind ${userNames}`,
       sender : firebase.auth().currentUser.uid,
       senderName : "Admin",
       timestamp : firebase.database.ServerValue.TIMESTAMP

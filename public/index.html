@@ -41,11 +41,19 @@
 
 
     <!-- LOGIN SCREEN SPLASH -->
-    <section id="login-screen" class="container-fluid">
+    <section id="login-screen" class="container-fluid" style="display:none">
       <br/>
-      <h1>Kita App Dev Mode</h1>
-      <p><i>Subtitle</i></p>
-      <p>Description</p>
+      <h1>Kita Bote</h1>
+      <p><i>v1.0 alpha</i></p>
+      <p>Test Version</p>
+      <ol>
+        <li>Bitte gib die von dir zur Verfügung gestellte E-Mail Adresse ein</li>
+        <li>Klicke auf "Passwort Zurücksetzen"</li>
+        <li>Schauen in deinem E-Mail Postfach nach und setz ein neues Passwort</li>
+        <li>Log dich mit deinem neuen Passwort ein 👍 </li>
+        <li>Viel Spaß 😊</li>
+      </ol>
+
 
       <div class="row">
         <div class="col-md-2">E-Mail:</div>
@@ -56,10 +64,13 @@
           <span title="Password">Passwort:</span>
         </div>
         <div class="col-md-3"><input type="password" id="password" class="form-control" value=""></div>
+        <div class="col-md-3">
+          <button class="btn btn-primary" role="button" id="resetPasswordButton" onclick="resetPassword()"><i class="fa fa-envelope"></i> Passwort Zurücksetzen</button>
+
+        </div>
       </div>
       <br>
       <button class="btn btn-primary" role="button" id="signInButton"><i class="fa fa-sign-in"></i> Einloggen</button>
-
       <br />
       <div id="output">
         <br>
