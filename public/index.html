@@ -81,9 +81,9 @@
           <div class="col-4 text-center">
             <h1 class="navbar-brand mb-0" id="pageTitle">pageTitle</h1>
           </div>
-          <!-- <div class="col">
-            <a class="btn btn-primary pull-right" href="#" type="" role="" id="signOutButton"><i class="fa fa-power-off" aria-hidden="true"></i></a>
-          </div> -->
+          <div class="col-4">
+            <a class="btn btn-primary pull-right invisible" href="#" type="" role="" id="newEntry" style="display:none" onclick=""><i class="fa fa-plus" aria-hidden="true"></i></a>
+          </div>
         </div>
       </nav>
 
@@ -143,24 +143,6 @@
 
     </div> <!-- MAIN VIEW END -->
 
-    <!-- POST BUTTON -->
-    <div class="fixed-bottom" style="padding-bottom:70px;padding-left:80%;display:''">
-      <a class="fa-stack fa-2x" href="#" id="new-post-button" style="display:none">
-        <i class="fa fa-circle fa-stack-2x"></i>
-        <i class="fa fa-pencil fa-stack-1x fa-inverse"></i>
-      </a>
-    </div>
-
-    <!-- event BUTTON -->
-    <div class="fixed-bottom" style="padding-bottom:70px;padding-left:80%;display:''">
-      <a class="fa-stack fa-2x" href="#" id="new-event-button" style="display:none">
-        <i class="fa fa-circle fa-stack-2x"></i>
-        <i class="fa fa-pencil fa-stack-1x fa-inverse"></i>
-      </a>
-    </div>
-
-
-
 
     <!-- Chat Input NavBar -->
     <nav class="navbar fixed-bottom navbar-light bg-faded" id="navbar-chat" style="display:none;padding-bottom:70px">
@@ -195,16 +177,19 @@
               <i class="fa fa-comments fa-2x" aria-hidden="true"></i>
               <!-- <font size="4" style="display:none"><sup><span class="badge badge-pill badge-danger">12</span></sup></font> -->
             </a>
-
           </div>
-
-          <!-- <div class="col col-md-auto col-lg-auto">
-            <a class="" href="#" type="" role="" id="-button"><i class="fa fa-envelope fa-2x" aria-hidden="true"></i></a>
-          </div> -->
 
           <div class="col col-md-auto col-lg-auto">
             <a class="" href="#" type="" role="" id="user-button"><i class="fa fa-user fa-2x" aria-hidden="true"></i></a>
           </div>
+
+          <div class="col col-md-auto col-lg-auto" id="admin" style="display:none">
+            <a class="" href="#" type="" role="" id="-button">
+              <i class="fa fa-database fa-2x" aria-hidden="true"></i>
+            </a>
+          </div>
+
+
         </div>
 
     </nav>

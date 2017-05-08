@@ -117,7 +117,7 @@ function displayPostDetail(id, target) {
 function displayKitaUpdates() {
   cleanUpUI(); //Clean-Up View
   $("#pageTitle").html("Neues");
-  document.getElementById('new-post-button').style.display = '';
+  $('#newEntry').removeClass('invisible').on('click',newPost)
   var content = '';
   var kitaUpdatesRef = database.ref(devRef+'/kitaUpdates').orderByKey();//.push({title:'feuer'});
   //pageContent.innerHTML += postTemplate('Test',kitaUpdates.once('value').val());
@@ -187,7 +187,7 @@ function displayKitaUpdates() {
 function displayCalendar() {
   cleanUpUI();
   $("#pageTitle").html("Kita Termine");
-  document.getElementById('new-event-button').style.display = '';
+  $('#newEntry').removeClass('invisible').on('click',newEvent)
   database.ref(devRef+'/calendarEvents').orderByChild('date').once("value")
     .then(function(snapshot) {
       snapshot.forEach(function(childSnapshot){
@@ -473,16 +473,44 @@ function signIn() {
 /*************************
   Load Admin Script
   ************************/
+function checkAdmin() {
+  let uid = firebase.auth().currentUser.uid
+  database.ref(devRef+`/users/${uid}/daycares`).once('value')
+    .then(daycares => {
+      daycares.forEach((daycare) => {
+          let key = daycare.key
+          database.ref(devRef+`/daycares/${key}/admin/${uid}`).once('value')
+            .then( snapshot => {
+              if (snapshot.exists()) {
+                loadAdmin()
+              }
+            })
+      })
+    })
+
+}
 
 function loadAdmin(){
-  $.getScript( "./js/admin.js" )
-    .done(function( script, textStatus ) {
-      console.log( textStatus );
-    })
-    .fail(function( jqxhr, settings, exception ) {
-      console.log( jqxhr );
-  });
+
+  function initAdminTools() {
+      document.getElementById('admin').style.display = '';
+      document.getElementById('newEntry').style.display = '';
+      $('#admin').on('click', showDaycare)
+  }
+
+  if(loadAdmin.counter === 0) {
+    $.getScript( "./js/admin.js" )
+      .done(function( script, textStatus ) {
+        initAdminTools();
+      })
+      .fail(function( jqxhr, settings, exception ) {
+        // console.log( jqxhr );
+    });
+  } else { return console.error('This has already been called')}
+
+  loadAdmin.counter++
 }
+loadAdmin.counter = 0
 
 /*************************
   APP FUNCTIONS
@@ -492,12 +520,11 @@ function loadAdmin(){
 function cleanUpUI() {
   $('#pageContent').html('');
   $('body').css('padding-bottom','70px');
+  $('#newEntry').addClass('invisible')
   document.getElementById('new-post').style.display = 'none';
   document.getElementById('new-event').style.display = 'none';
   document.getElementById('navbar-chat').style.display = 'none';
   document.getElementById('navbar-view').style.display = '';
-  document.getElementById('new-post-button').style.display = 'none';
-  document.getElementById('new-event-button').style.display = 'none';
   document.getElementById('backButton').style.display = 'none';
 }
 
@@ -505,6 +532,8 @@ function cleanUpUI() {
 function initApp() {
   firebase.auth().onAuthStateChanged(function(user) {
     if (user) {
+      
+      checkAdmin()
       // User is signed in.
       var displayName = user.displayName;
       var email = user.email;
@@ -518,12 +547,11 @@ function initApp() {
       document.getElementById('login-screen').style.display = 'none'; //Hide login ccreen if user is signed-In
       document.getElementById('main-view').style.display = '';
       document.getElementById('navbar-view').style.display = '';
-      document.getElementById('new-post-button').style.display = 'none';
 
       //specify init view
       //TODO turn off in deploy
-      // displayKitaUpdates();
-      displayChats();
+      displayKitaUpdates();
+      // displayChats();
       // displayCalendar();
       // newEvent();
 
@@ -532,7 +560,6 @@ function initApp() {
       document.getElementById('login-screen').style.display = ''; //Show login screen if user is signed-Out
       document.getElementById('main-view').style.display = 'none';
       document.getElementById('navbar-view').style.display = 'none';
-      document.getElementById('new-post-button').style.display = 'none';
     } //end if
   }); //end of mehtod
 
@@ -541,9 +568,6 @@ function initApp() {
   //Add Event Listenesrs
   // document.getElementById('signOutButton').addEventListener('click',signOut,false);
   document.getElementById('signInButton').addEventListener('click',signIn,false);
-  document.getElementById('new-post-button').addEventListener('click',newPost,false);
-  document.getElementById('new-event-button').addEventListener('click',newEvent,false);
-
   document.getElementById('kita-updates-push-button').addEventListener('click',pushNewPost,false);
   document.getElementById('kita-event-push-button').addEventListener('click',pushEventPost,false);
 

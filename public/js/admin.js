@@ -7,8 +7,14 @@ var config = {
   messagingSenderId: "994027603927"
 };
 
-//disable in index view:
-// firebase.initializeApp(config);
+//try initializing app
+try {
+  firebase.initializeApp(config);
+}
+catch(error) {
+  //if already initialized, do nothing
+}
+
 
 //second app for admin reasons…
 var taube = firebase.initializeApp(config, 'taube');
@@ -51,6 +57,23 @@ function newDaycare(uid, daycareName){
 Show Family and Group DB Tree
 *********************/
 
+function showDaycare() {
+  cleanUpUI()
+  $('#pageTitle').html('Übersicht')
+  let html = `  <!-- Daycare Database Functionalities -->
+    <div class="" id="">
+        <h3>Gruppen</h3>
+        <ul class="" id="groups"></ul>
+        <button class="btn btn-primary" role="button" id="newGroup" onclick="newGroup()"><i class="fa fa-plus"></i> Gruppe</button>
+        <p></p>
+        <h3>Familien</h3>
+        <ul class="" id="families"></ul>
+        <button class="btn btn-primary" role="button" id="newFamily" onclick="newFamily()"><i class="fa fa-plus"></i> Familie</button>
+    </div>`
+  $('#pageContent').html(html)
+  showFamilies()
+}
+
 function showFamilies() {
 
   //show groups
@@ -86,14 +109,14 @@ New Group
 
 function newGroup() {
   //display newGroup UI
-  cleanUpUI(false);
+  cleanUpUI();
   let option =
   `<div class="row">
     <div class="col-2">Gruppenname</div><div class="col-10 col-lg-4 col-xl-4"><input type="text" class="form-control" id="groupName" value=""></div>
     </div>
     <br>
     <button class="btn btn-success" role="button" id="done" onclick="newGroup.push()"><i class="fa fa-check"></i> Fertig</button>
-    <button class="btn btn-danger" role="button" id="" onclick="cleanUpUI(true)"><i class="fa fa-times"></i> Abbrechen</button>`
+    <button class="btn btn-danger" role="button" id="" onclick="showDaycare()"><i class="fa fa-times"></i> Abbrechen</button>`
   $('#pageContent').html(option)
 
   //function to push new Gruop to DB
@@ -103,6 +126,9 @@ function newGroup() {
 
     //get Group name
     let name = document.getElementById('groupName').value
+    if (!name) {
+      return alert('Bitte Namen eingeben')
+    }
 
     //push to database
     database.ref(devRef+`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
@@ -112,7 +138,7 @@ function newGroup() {
         database.ref(devRef+`/daycares/${daycareKey}/groups`).push({name})
       })//end for each
     })//end then
-    cleanUpUI(true)
+    showDaycare()
   }
   newGroup.push = push
 }
@@ -211,7 +237,7 @@ function addTemplate(target) {
 }//end addTemplate
 
 function newFamily() {
-  cleanUpUI(false)
+  cleanUpUI()
   var html = `
   <h1>Neue Familie</h1>
   <div class="row">
@@ -230,7 +256,7 @@ function newFamily() {
   <button class="btn btn-primary" role="button" id="" onclick="addTemplate('kid')"><i class="fa fa-plus"></i> Kind</button>
   <hr>
   <button class="btn btn-success" role="button" id="done" onclick="pushFamilyToFirebase()"><i class="fa fa-check"></i> Fertig</button>
-  <button class="btn btn-danger" role="button" id="" onclick="cleanUpUI(true)"><i class="fa fa-times"></i> Abbrechen</button>
+  <button class="btn btn-danger" role="button" id="" onclick="showDaycare()"><i class="fa fa-times"></i> Abbrechen</button>
   `
   $('#pageContent').html(html)
   addTemplate('adult')
@@ -361,7 +387,7 @@ function pushFamilyToFirebase(familyKey) {
 
   //wait for all to be sovled
   Promise.all([p1, p2, p3]).then(function(){
-    cleanUpUI(true)
+    showDaycare()
   }).catch(function(e){
     console.log(e)
   })
@@ -414,110 +440,102 @@ function newChat(users, familyName) {
   })
 }
 
-/********************
-Splash Screen Functions
-*********************/
-
-//Sign-Out Function
-function signOut() {
-  var user = firebase.auth().currentUser;
-  if (user) {
-    //$('#output').append('<br>User Signed-In');
-    //document.getElementById('login-screen').style.display = 'none';
-    firebase.auth().signOut().then(function() {
-      console.log('Signed Out');
-    }, function(error) {
-      console.error('Sign Out Error', error);
-    });
-  }
-  else {
-    //$('#output').append('<br>User is signed-Out');
-  };
-}
-
-// Sign-In Fucntion
-function signIn() {
-  var user = firebase.auth().currentUser
-  if (!user) {
-    var email = document.getElementById('email').value;
-    var password = document.getElementById('password').value;
-    firebase.auth().signInWithEmailAndPassword(email, password).catch(function(error) {
-      // Handle Errors here.
-      var errorCode = error.code;
-      var errorMessage = error.message;
-      // ...
-      alert(errorMessage);
-    });
-  }
-  else {
-    firebase.auth().signOut().then(function() {
-      console.log('Signed Out');
-    }, function(error) {
-      console.error('Sign Out Error', error);
-    });
-  }
-}
 
 /*************************
 APP FUNCTIONS
 ************************/
 
 //Clean Up Page Content
-function cleanUpUI(startPage) {
-  $('#pageContent').html('')
-  $('#families').html('')
-  $('#groups').html('')
+if (typeof cleanUpUI != 'function') {
 
-  switch(startPage) {
-    case true :
-      document.getElementById('startPage').style.display = ''
-      showFamilies()
-      break
-    case false :
-      document.getElementById('startPage').style.display = 'none'
-    default: break
+  function cleanUpUI() {
+    $('#pageContent').html('')
+  }
 
-    }
-}
+  /********************
+  Splash Screen Functions
+  *********************/
 
-//App initialization - fires everytime the document is load
-function initApp() {
-  firebase.auth().onAuthStateChanged(function(user) {
+  //Sign-Out Function
+  function signOut() {
+    var user = firebase.auth().currentUser;
     if (user) {
-      // User is signed in.
-      var displayName = user.displayName;
-      var email = user.email;
-      var emailVerified = user.emailVerified;
-      var photoURL = user.photoURL;
-      var isAnonymous = user.isAnonymous;
-      var uid = user.uid;
-      var providerData = user.providerData;
+      //$('#output').append('<br>User Signed-In');
+      //document.getElementById('login-screen').style.display = 'none';
+      firebase.auth().signOut().then(function() {
+        console.log('Signed Out');
+      }, function(error) {
+        console.error('Sign Out Error', error);
+      });
+    }
+    else {
+      //$('#output').append('<br>User is signed-Out');
+    };
+  }
 
-      document.getElementById('login-screen').style.display = 'none'; //Hide login ccreen if user is signed-In
-      document.getElementById('main-view').style.display = '';
+  // Sign-In Fucntion
+  function signIn() {
+    var user = firebase.auth().currentUser
+    if (!user) {
+      var email = document.getElementById('email').value;
+      var password = document.getElementById('password').value;
+      firebase.auth().signInWithEmailAndPassword(email, password).catch(function(error) {
+        // Handle Errors here.
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        // ...
+        alert(errorMessage);
+      });
+    }
+    else {
+      firebase.auth().signOut().then(function() {
+        console.log('Signed Out');
+      }, function(error) {
+        console.error('Sign Out Error', error);
+      });
+    }
+  }
 
-      //load home view with family DB
-      cleanUpUI(true)
+  //App initialization - fires everytime the document is load
+  function initApp() {
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (user) {
+        // User is signed in.
+        var displayName = user.displayName;
+        var email = user.email;
+        var emailVerified = user.emailVerified;
+        var photoURL = user.photoURL;
+        var isAnonymous = user.isAnonymous;
+        var uid = user.uid;
+        var providerData = user.providerData;
 
-    } else {
-      // User is signed out.
-      document.getElementById('login-screen').style.display = ''; //Show login screen if user is signed-Out
-      document.getElementById('main-view').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'none'; //Hide login ccreen if user is signed-In
+        document.getElementById('main-view').style.display = '';
 
-    } //end if
-  }); //end of mehtod
+        //load home view with family DB
+        cleanUpUI()
 
-  //dev
-  $('#email').val('e.scherlies@me.com');
-  $('#password').val('qwer1234');
+      } else {
+        // User is signed out.
+        document.getElementById('login-screen').style.display = ''; //Show login screen if user is signed-Out
+        document.getElementById('main-view').style.display = 'none';
 
-  //Add Event Listenesrs
-  document.getElementById('signOutButton').addEventListener('click',signOut,false);
-  document.getElementById('signInButton').addEventListener('click',signIn,false);
-  document.getElementById('newFamily').addEventListener('click',newFamily,false);
-  document.getElementById('newGroup').addEventListener('click',newGroup,false);
+      } //end if
+    }); //end of mehtod
+
+    //dev
+    $('#email').val('e.scherlies@me.com');
+    $('#password').val('qwer1234');
+
+    //Add Event Listenesrs
+    document.getElementById('signOutButton').addEventListener('click',signOut,false);
+    document.getElementById('signInButton').addEventListener('click',signIn,false);
+    // document.getElementById('newFamily').addEventListener('click',newFamily,false);
+    // document.getElementById('newGroup').addEventListener('click',newGroup,false);
+  }
+
+  window.onload = function() {
+    initApp();
+    console.log('Init')
+  };
 }
-
-window.onload = function() {
-  initApp();
-};
