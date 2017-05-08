@@ -428,7 +428,7 @@ function newChat(users, familyName) {
   Promise.all(proms).then( proms => {
     userNames += '</ul>'
     let message = {
-      content : `Willkommen im Chat View! Mitglieder sind ${userNames}`,
+      content : `Willkommen im Chat! Mitglieder sind ${userNames}`,
       sender : firebase.auth().currentUser.uid,
       senderName : "Admin",
       timestamp : firebase.database.ServerValue.TIMESTAMP
@@ -437,6 +437,8 @@ function newChat(users, familyName) {
       //timestamp
     }
     database.ref(devRef+`/chats/${chatKey}/messages`).push(message)
+    message['content'] = 'Willkommen im Chat!';
+    database.ref(devRef+`/chats/${chatKey}/lastMessage`).set(message)
   })
 }
 

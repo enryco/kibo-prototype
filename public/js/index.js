@@ -235,7 +235,7 @@ function enterToSend(event) {
 function getSenderName(senderID) {
   // var senderName = '';
   return database.ref(devRef+'/users/' + senderID).once('value').then(function(snapshot) {
-      return snapshot.child('name').val();
+      return snapshot.child('firstname').val();
       // return senderName;
       // console.log(senderName);
   });
@@ -336,10 +336,9 @@ function displayChats() {
   database.ref(devRef+`/users/${firebase.auth().currentUser.uid}/chats`).once('value')
     .then( snapshot => {
       snapshot.forEach( childSnapshot => {
-        let famName = ''
         let chatKey = childSnapshot.key
         database.ref(devRef+`/chats/${chatKey}/`).once('value').then( snapshot => {
-          famName = snapshot.val().familyName
+          let famName = snapshot.val().familyName
           let content = snapshot.child('lastMessage').child('content').val()
           let name = snapshot.child('lastMessage').child('senderName').val()
           let timestamp = snapshot.child('lastMessage').child('timestamp').val()
