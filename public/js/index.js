@@ -22,6 +22,8 @@ var database = firebase.database();
 //developer mode?
 var devRef = true ? '/0' : ''
 
+//init locale time
+moment.locale('de')
 
 /*************************
   CURATOR - NEW Post
@@ -289,10 +291,9 @@ function displayChat(chatID) {
 
         //time
         let timestamp = childSnapshot.val().timestamp;
-        let timeObj = new Date(timestamp);
-        time = timeObj.toLocaleString();
+        let timeFromNow = moment(timestamp).fromNow()
 
-        let header = senderName + ' - ' + time;
+        let header = senderName + ' - ' + timeFromNow;
         let messageHTML = displayMessage(content,header);
 
         $('#pageContent').append(messageHTML);
@@ -316,13 +317,18 @@ function displayChats() {
   $('#pageContent').html(list)
 
   //get all chats and appent them to the list
-  function chatElement(chatKey,header) {
+  function chatElement(chatKey,header,timestamp,content,name) {
+    content = content ? content : 'undefined'
+    name = name ? name : 'undefined'
+    let timeFromNow = timestamp ? moment(timestamp).fromNow() : 'undefined'
+    if(content.split('').lenth > 30) {content = content.split('').slice(0,30).join('')}
+
     let html = `<a href="#" class="list-group-item list-group-item-action flex-column align-items-start" onclick="displayChat('${chatKey}')">
       <div class="d-flex w-100 justify-content-between">
         <h5 class="mb-1">${header}</h5>
-        <small class="text-muted">Placeholder Time</small>
+        <small class="text-muted">${timeFromNow}</small>
       </div>
-      <small class="text-muted">Vorschautext Platzhalter</small>
+      <small class="text-muted">${name}: ${content}</small>
     </a>`
     $('#chatsGroup').append(html)
   }
@@ -334,7 +340,10 @@ function displayChats() {
         let chatKey = childSnapshot.key
         database.ref(devRef+`/chats/${chatKey}/`).once('value').then( snapshot => {
           famName = snapshot.val().familyName
-          chatElement(chatKey,famName)
+          let content = snapshot.child('lastMessage').child('content').val()
+          let name = snapshot.child('lastMessage').child('senderName').val()
+          let timestamp = snapshot.child('lastMessage').child('timestamp').val()
+          chatElement(chatKey,famName,timestamp,content,name)
         })
       })
     });
@@ -345,23 +354,29 @@ function pushMessageToFirebase(chatID, senderID, receiverIDs, message) {
   if (!(chatID && senderID && receiverIDs && message)) {
       return false;
   };
+  //strip message from potential html
+  message = $("<div>").html(message).text()
+
   //var uid = firebase.auth().currentUser.uid;
-  var chatRef = database.ref(devRef+'/chats/' + chatID + '/messages'); //get chat-messages reference
+  var chatRef = database.ref(devRef+'/chats/' + chatID); //get chat-messages reference
   //var userRef = database.ref(devRef+'/users/' + senderID + '/chats/' + chatID);
   //
   var chatJSON = {};
   var name = getSenderName(senderID);
   Promise.all([name]).then(function(results) {
+    let timestamp = firebase.database.ServerValue.TIMESTAMP
     chatJSON = {
       content: message,
       sender : senderID,
       senderName : results[0],
-      timestamp : firebase.database.ServerValue.TIMESTAMP
+      timestamp
       // receiver :
       //   receiverIDs
       //timestamp
     };
-    chatRef.push(chatJSON);
+    chatRef.child('messages').push(chatJSON);
+    chatRef.child('lastMessage').set(chatJSON);
+
     displayChat(chatID); //Reload Chat View -> Later: Check if message has arrived @DB and APPEND to current view
 
   });
@@ -532,7 +547,7 @@ function cleanUpUI() {
 function initApp() {
   firebase.auth().onAuthStateChanged(function(user) {
     if (user) {
-      
+
       checkAdmin()
       // User is signed in.
       var displayName = user.displayName;
