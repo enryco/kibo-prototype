@@ -6,7 +6,9 @@ var config = {
   storageBucket: "kita-app-48708.appspot.com",
   messagingSenderId: "994027603927"
 };
-firebase.initializeApp(config);
+
+//disable in index view:
+// firebase.initializeApp(config);
 
 //second app for admin reasons…
 var taube = firebase.initializeApp(config, 'taube');
@@ -15,9 +17,34 @@ var taube = firebase.initializeApp(config, 'taube');
 //var pageContent = document.getElementById('pageContent');
 var database = firebase.database();
 
+//developer mode?
+var devRef = true ? '/0' : ''
+
 //update an user
 function updateUser(uid, attributesObj){
-  database.ref('users/'+uid).update(attributesObj)
+  database.ref(devRef+'/users/'+uid).update(attributesObj)
+}
+
+function newDaycare(uid, daycareName){
+
+  uid ? addToUser(uid) : createUser()
+
+  function addToUser(uid){
+    //
+    let daycareKey = database.ref(devRef).push().key
+    let obj = {}
+    obj[`/users/${uid}/daycares/${daycareKey}`] = true
+    obj[`/daycares/${daycareKey}`] = { name : daycareName }
+    database.ref(devRef).update(obj)
+  }
+
+  function createUser(){
+    //steps to create user
+    //via taube.
+
+    //if user created:
+    addToUser(uid)
+  }
 }
 
 /********************
@@ -27,12 +54,12 @@ Show Family and Group DB Tree
 function showFamilies() {
 
   //show groups
-  database.ref(`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
+  database.ref(devRef+`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
   .then( daycares => {
     daycares.forEach( daycare => {
 
       //show groups
-      database.ref(`daycares/${daycare.key}/groups`).once('value')
+      database.ref(devRef+`/daycares/${daycare.key}/groups`).once('value')
         .then( groups => {
           groups.forEach( group => {
             let listElement = `<li>${group.val().name}</li>`
@@ -41,7 +68,7 @@ function showFamilies() {
         })
 
       //show famillies
-      database.ref(`daycares/${daycare.key}/families`).once('value')
+      database.ref(devRef+`/daycares/${daycare.key}/families`).once('value')
         .then( families => {
           families.forEach( family => {
             let listElement = `<li>${family.val().name}</li>`
@@ -78,11 +105,11 @@ function newGroup() {
     let name = document.getElementById('groupName').value
 
     //push to database
-    database.ref(`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
+    database.ref(devRef+`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
     .then( snapshot => {
       snapshot.forEach( cS => {
         let daycareKey = cS.key
-        database.ref(`daycares/${daycareKey}/groups`).push({name})
+        database.ref(devRef+`/daycares/${daycareKey}/groups`).push({name})
       })//end for each
     })//end then
     cleanUpUI(true)
@@ -162,11 +189,11 @@ function addTemplate(target) {
   $(template).append(html)
 
   if (target == 'kid') {
-    database.ref(`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
+    database.ref(devRef+`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
     .then( snapshot => {
       snapshot.forEach( cS => {
         let daycareKey = cS.key
-        database.ref(`daycares/${daycareKey}/groups`).once("value")
+        database.ref(devRef+`/daycares/${daycareKey}/groups`).once("value")
         .then( snapshot2 => {
           console.log(snapshot2.key)
           snapshot2.forEach( cs2 => {
@@ -228,14 +255,14 @@ function pushAdults(familyKey, familyName) {
     }
     //create actual user w/ random pw
     //using second firebase app for signin up new user
-    let temporaryPassword = database.ref().push().key //use a key to set pw
+    let temporaryPassword = database.ref(devRef).push().key //use a key to set pw
     let newUser = taube.auth().createUserWithEmailAndPassword(email, temporaryPassword).then(function(newUser) {
 
       //change users displayName
       taube.auth().currentUser.updateProfile({ displayName : firstname }).then( _ =>  console.log('Username Changed'))
 
       //make db entry of adult properties
-      database.ref('/users/'+newUser.uid).set(adult)
+      database.ref(devRef+'/users/'+newUser.uid).set(adult)
 
       //make list for family/adults
       adults[newUser.uid] = true
@@ -259,7 +286,7 @@ function pushAdults(familyKey, familyName) {
   //iterate over adultTemplates
   //gather in neat JSON
   while (document.getElementById(target+count+'Lastname') !== null) {
-    // let adultKey = database.ref().push().key
+    // let adultKey = database.ref(devRef).push().key
     let lastname = document.getElementById(target+count+'Lastname').value
     let firstname =  document.getElementById(target+count+'Firstname').value
     let email = document.getElementById(target+count+'EMail').value
@@ -279,7 +306,7 @@ function pushAdults(familyKey, familyName) {
     chatUsers = JSON.parse(JSON.stringify(adults))
     chatUsers[firebase.auth().currentUser.uid] = true
     newChat(chatUsers, familyName)
-    return database.ref('/families/' + familyKey + '/adults/').set(adults)
+    return database.ref(devRef+'/families/' + familyKey + '/adults/').set(adults)
   }).catch(error => { console.log(error.message)} )
 }
 
@@ -290,7 +317,7 @@ function pushKids(familyKey) {
   var target = 'kid'
   var kids = {}
   while (document.getElementById(target+count+'Lastname') !== null) {
-    let newKey = database.ref().push().key
+    let newKey = database.ref(devRef).push().key
     let lastname = document.getElementById(target+count+'Lastname').value
     let firstname =  document.getElementById(target+count+'Firstname').value
     let group = document.getElementById(target+count+'Group').value
@@ -301,7 +328,7 @@ function pushKids(familyKey) {
     }
     count += 1
   }
-  return database.ref().child('families/' + familyKey + '/kids').set(kids)
+  return database.ref(devRef).child('/families/' + familyKey + '/kids').set(kids)
 }
 
 function pushFamilyToFirebase(familyKey) {
@@ -310,7 +337,7 @@ function pushFamilyToFirebase(familyKey) {
 
   //if no key is provided, generate new family key
   if (familyKey === undefined) {
-    var familyKey = database.ref().child('families').push().key
+    var familyKey = database.ref(devRef).child('families').push().key
   }
   var familyName = document.getElementById('familyName').value
   //write familyname to family entry
@@ -321,14 +348,14 @@ function pushFamilyToFirebase(familyKey) {
 
   //push family base to firebase
   //to daycare ref
-  database.ref(`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
+  database.ref(devRef+`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
   .then( daycares => {
     daycares.forEach( daycare => {
       //show famillies
-      database.ref(`daycares/${daycare.key}/families/${familyKey}`).set(family)
+      database.ref(devRef+`/daycares/${daycare.key}/families/${familyKey}`).set(family)
     })//end for each
   })//end then
-  let p1 = database.ref().child('families/'+familyKey).set(family)
+  let p1 = database.ref(devRef).child('/families/'+familyKey).set(family)
   let p2 = pushAdults(familyKey, familyName)
   let p3 = pushKids(familyKey)
 
@@ -345,26 +372,26 @@ function pushFamilyToFirebase(familyKey) {
 //users must be json containing { user1 : true, ... }
 function newChat(users, familyName) {
   //get new chat key
-  var chatKey = database.ref('chats').push().key
+  var chatKey = database.ref(devRef+'chats').push().key
 
   //create participants JSON
   for (let key in users) {
     //add chat id to users/$uid/chats
-    database.ref(`/users/${key}/chats`).update({ [chatKey] : true })
+    database.ref(devRef+`/users/${key}/chats`).update({ [chatKey] : true })
   }
 
   //initialize chat with paticipants
-  database.ref(`/chats/${chatKey}/users`).set(users)
+  database.ref(devRef+`/chats/${chatKey}/users`).set(users)
 
   //create chat name as familyName
   //as for now: just take the familyname from DOM Element
-  database.ref(`/chats/${chatKey}/`).update({ familyName })
+  database.ref(devRef+`/chats/${chatKey}/`).update({ familyName })
 
   //initialize welcome message
   var userNames = '<ul>'
   var proms = []
   for (let userId in users) {
-    let prom = database.ref(`/users/${userId}/`).once('value')
+    let prom = database.ref(devRef+`/users/${userId}/`).once('value')
     .then( snapshot => {
       let name = snapshot.val().fullname ? snapshot.val().fullname : snapshot.val().firstname
       console.log(name)
@@ -383,7 +410,7 @@ function newChat(users, familyName) {
       //   receiverIDs
       //timestamp
     }
-    database.ref(`/chats/${chatKey}/messages`).push(message)
+    database.ref(devRef+`/chats/${chatKey}/messages`).push(message)
   })
 }
 

@@ -18,7 +18,9 @@ firebase.initializeApp(config);
 //shortcuts
 //var pageContent = document.getElementById('pageContent');
 var database = firebase.database();
-// var kitaRef =
+
+//developer mode?
+var devRef = true ? '/0' : ''
 
 
 /*************************
@@ -33,7 +35,7 @@ function newPost() {
 
 //Push New Post To Database & Load view
 function pushNewPost() {
-  var kitaUpdatesRef = database.ref('kitaUpdates');
+  var kitaUpdatesRef = database.ref(devRef+'/kitaUpdates');
   var postTitle = document.getElementById('new-post-title');
   var postPreview = document.getElementById('new-post-preview');
   // var postContent = document.getElementById('new-post-content'); //No longer needed
@@ -95,10 +97,10 @@ function displayPost(title, preview, target, id) {
 function displayPostDetail(id, target) {
   if (target == 'post') {
     var backButton = '<br><br><button class="btn btn-primary" role="button" onclick="displayKitaUpdates()">Zurück</button>';
-    var postRef = database.ref('kitaUpdates/' + id);
+    var postRef = database.ref(devRef+'/kitaUpdates/' + id);
   } else if (target == 'event') {
     var backButton = '<br><br><button class="btn btn-primary" role="button" onclick="displayCalendar()">Zurück</button>';
-    var postRef = database.ref('calendarEvents/' + id);
+    var postRef = database.ref(devRef+'/calendarEvents/' + id);
   } else {
     return Error('Target not defined')
   }
@@ -117,7 +119,7 @@ function displayKitaUpdates() {
   $("#pageTitle").html("Neues");
   document.getElementById('new-post-button').style.display = '';
   var content = '';
-  var kitaUpdatesRef = database.ref('kitaUpdates').orderByKey();//.push({title:'feuer'});
+  var kitaUpdatesRef = database.ref(devRef+'/kitaUpdates').orderByKey();//.push({title:'feuer'});
   //pageContent.innerHTML += postTemplate('Test',kitaUpdates.once('value').val());
   kitaUpdatesRef.once("value")
   .then(function(snapshot){
@@ -149,7 +151,7 @@ function displayKitaUpdates() {
  //Push New Post To Database & Load view
  function pushEventPost() {
 
-   var kitaUpdatesRef = database.ref('calendarEvents');
+   var kitaUpdatesRef = database.ref(devRef+'/calendarEvents');
    var title = document.getElementById('new-event-title');
    var preview = document.getElementById('new-event-preview');
    var date = document.getElementById('new-event-date');
@@ -186,7 +188,7 @@ function displayCalendar() {
   cleanUpUI();
   $("#pageTitle").html("Kita Termine");
   document.getElementById('new-event-button').style.display = '';
-  database.ref('calendarEvents').orderByChild('date').once("value")
+  database.ref(devRef+'/calendarEvents').orderByChild('date').once("value")
     .then(function(snapshot) {
       snapshot.forEach(function(childSnapshot){
         var title = childSnapshot.val().title;
@@ -230,7 +232,7 @@ function enterToSend(event) {
 //get sender name
 function getSenderName(senderID) {
   // var senderName = '';
-  return database.ref('users/' + senderID).once('value').then(function(snapshot) {
+  return database.ref(devRef+'/users/' + senderID).once('value').then(function(snapshot) {
       return snapshot.child('name').val();
       // return senderName;
       // console.log(senderName);
@@ -240,12 +242,12 @@ function getSenderName(senderID) {
 
 //edit message
 function editMessage(chatId,messageId,content){
-  database.ref(`chats/${chatId}/messages/${messageId}`).update({ content, edit : true })
+  database.ref(devRef+`/chats/${chatId}/messages/${messageId}`).update({ content, edit : true })
 }
 
 //delete message
 function deleteMessage(chatId,messageId) {
-  database.ref(`chats/${chatId}/messages/${messageId}`).set({})
+  database.ref(devRef+`/chats/${chatId}/messages/${messageId}`).set({})
 }
 
 //DiplayChat
@@ -254,14 +256,18 @@ function displayChat(chatID) {
   $('#pageTitle').html('Chat');
   // document.getElementById('navbar-view').style.display = 'none';
   document.getElementById('navbar-chat').style.display = '';
+  let backButton = document.getElementById('backButton')
+  backButton.style.display = '';
+  backButton.setAttribute('onclick','displayChats()')
+
   //displayChats();
 
   //get sender names, and promises
   var proms = []
   var senderNames = {}
-  proms.push(database.ref(`/chats/${chatID}/users/`).once('value')
+  proms.push(database.ref(devRef+`/chats/${chatID}/users/`).once('value')
     .then( snapshot => snapshot.forEach( childSnapshot => {
-      proms.push(database.ref(`/users/${childSnapshot.key}/`).once('value')
+      proms.push(database.ref(devRef+`/users/${childSnapshot.key}/`).once('value')
         .then( userName => senderNames[childSnapshot.key] = userName.val().firstname )
       )
     })
@@ -271,7 +277,7 @@ function displayChat(chatID) {
   //wait for senderNames
   //display messages
   Promise.all(proms).then( _ => {
-    var chatRef = database.ref('/chats/' + chatID + '/messages').orderByKey();
+    var chatRef = database.ref(devRef+'/chats/' + chatID + '/messages').orderByKey();
     chatRef.once('value').then( function(snapshot){
       snapshot.forEach(function(childSnapshot){
         let messageID = childSnapshot.key;
@@ -304,6 +310,7 @@ function displayChat(chatID) {
 
 //Display Chats (esp. for Kilei or later use)
 function displayChats() {
+  cleanUpUI()
   document.getElementById('navbar-chat').style.display = 'none';
   let list = `<div class="list-group" id="chatsGroup"></div>`
   $('#pageContent').html(list)
@@ -320,12 +327,12 @@ function displayChats() {
     $('#chatsGroup').append(html)
   }
   //get all chats the user is in
-  database.ref(`users/${firebase.auth().currentUser.uid}/chats`).once('value')
+  database.ref(devRef+`/users/${firebase.auth().currentUser.uid}/chats`).once('value')
     .then( snapshot => {
       snapshot.forEach( childSnapshot => {
         let famName = ''
         let chatKey = childSnapshot.key
-        database.ref(`chats/${chatKey}/`).once('value').then( snapshot => {
+        database.ref(devRef+`/chats/${chatKey}/`).once('value').then( snapshot => {
           famName = snapshot.val().familyName
           chatElement(chatKey,famName)
         })
@@ -339,8 +346,8 @@ function pushMessageToFirebase(chatID, senderID, receiverIDs, message) {
       return false;
   };
   //var uid = firebase.auth().currentUser.uid;
-  var chatRef = database.ref('chats/' + chatID + '/messages'); //get chat-messages reference
-  //var userRef = database.ref('users/' + senderID + '/chats/' + chatID);
+  var chatRef = database.ref(devRef+'/chats/' + chatID + '/messages'); //get chat-messages reference
+  //var userRef = database.ref(devRef+'/users/' + senderID + '/chats/' + chatID);
   //
   var chatJSON = {};
   var name = getSenderName(senderID);
@@ -367,7 +374,7 @@ function sendMessage(chatID) {
   var senderID = firebase.auth().currentUser.uid; //get user id
   var message = document.getElementById('chat-message-input'); //message form id
   if (!message.value) { return alert('Nachricht darf nicht leer sein')};
-  //var chatID = database.ref('user/' + senderID + '/chats'); //get reference to chat
+  //var chatID = database.ref(devRef+'/user/' + senderID + '/chats'); //get reference to chat
   //TODO get actual chatID
   // var chatID = '-KjEjimClcMXNV1DtGax'; //für testzwecke!
   var receiverIDjson = 'none';        //für testzwecke
@@ -463,6 +470,19 @@ function signIn() {
   }
 }
 
+/*************************
+  Load Admin Script
+  ************************/
+
+function loadAdmin(){
+  $.getScript( "./js/admin.js" )
+    .done(function( script, textStatus ) {
+      console.log( textStatus );
+    })
+    .fail(function( jqxhr, settings, exception ) {
+      console.log( jqxhr );
+  });
+}
 
 /*************************
   APP FUNCTIONS
@@ -474,12 +494,11 @@ function cleanUpUI() {
   $('body').css('padding-bottom','70px');
   document.getElementById('new-post').style.display = 'none';
   document.getElementById('new-event').style.display = 'none';
-
   document.getElementById('navbar-chat').style.display = 'none';
   document.getElementById('navbar-view').style.display = '';
   document.getElementById('new-post-button').style.display = 'none';
   document.getElementById('new-event-button').style.display = 'none';
-
+  document.getElementById('backButton').style.display = 'none';
 }
 
 //App initialization - fires everytime the document is load
