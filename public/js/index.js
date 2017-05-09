@@ -20,7 +20,7 @@ firebase.initializeApp(config);
 var database = firebase.database();
 
 //developer mode?
-var devRef = true ? '/0' : ''
+var devRef = true ? '/1' : ''
 
 //init locale time
 moment.locale('de')
@@ -193,12 +193,14 @@ function displayCalendar() {
   database.ref(devRef+'/calendarEvents').orderByChild('date').once("value")
     .then(function(snapshot) {
       snapshot.forEach(function(childSnapshot){
-        var title = childSnapshot.val().title;
-        var preview = childSnapshot.val().preview;
-        var id = childSnapshot.key;
+        let time = moment(childSnapshot.val().timestamp).format('ddd,DoMoY')
+        let title = childSnapshot.val().title;
+        let header = `${time} - ${title}`
+        let preview = childSnapshot.val().preview;
+        let id = childSnapshot.key;
         // var eventTitle = childSnapshot.val().title;
-        var eventContent = childSnapshot.val().content;
-        var post = displayPost(title, preview, 'event', id); //title, preview, content, id
+        let eventContent = childSnapshot.val().content;
+        let post = displayPost(header, preview, 'event', id); //title, preview, content, id
         $('#pageContent').append(post);
       })
     })

@@ -24,7 +24,7 @@ var taube = firebase.initializeApp(config, 'taube');
 var database = firebase.database();
 
 //developer mode?
-var devRef = true ? '/0' : ''
+var devRef = true ? '/1' : ''
 
 //update an user
 function updateUser(uid, attributesObj){
@@ -301,7 +301,7 @@ function pushAdults(familyKey, familyName) {
       });
 
       //delete user to allow smooth developement
-      taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
+      // taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
 
     }).catch(function(error) {
       // Handle Errors here.
@@ -353,7 +353,7 @@ function pushKids(familyKey) {
     let newKey = database.ref(devRef).push().key
     let lastname = document.getElementById(target+count+'Lastname').value
     let firstname =  document.getElementById(target+count+'Firstname').value
-    let group = document.getElementById(target+count+'Group').value
+    let group = document.getElementById(target+count+'Group').getAttribute('groupkey')
     kids[newKey] = {
       lastname,
       firstname,
