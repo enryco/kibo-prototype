@@ -24,7 +24,7 @@ var taube = firebase.initializeApp(config, 'taube');
 var database = firebase.database();
 
 //developer mode?
-var devRef = true ? '/1' : ''
+var devRef = true ? '/0' : ''
 
 //update an user
 function updateUser(uid, attributesObj){
@@ -135,7 +135,26 @@ function newGroup() {
     .then( snapshot => {
       snapshot.forEach( cS => {
         let daycareKey = cS.key
-        database.ref(devRef+`/daycares/${daycareKey}/groups`).push({name})
+        let groupKey = database.ref(devRef+`/daycares/${daycareKey}/groups`).push({name}).key
+        let uid = firebase.auth().currentUser.uid
+        let message = {
+          content : "Systemlog: Neuer broadcast Chat initialisiert",
+          sender : uid,
+          senderName : 'Admin',
+          timestamp : firebase.database.ServerValue.TIMESTAMP
+          }
+        let chatObj = {
+          broadcast : true,
+          familyName : `-> ${name}`,
+          users : {
+            [uid] : true },
+          messages : {
+            [database.ref().push().key] : message
+          },
+          lastMessage : message
+        }
+        database.ref(devRef+`/chats/${groupKey}`).set(chatObj)
+        database.ref(devRef+`/users/${uid}/chats`).update({ [groupKey] : true })
       })//end for each
     })//end then
     showDaycare()
@@ -174,7 +193,7 @@ function addTemplate(target) {
     option = `
     <div class="row">
       <div class="col-2">E-Mail</div>
-      <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier} form-control family email" id="${identifier}EMail" value="testUser${count}@enricoscherlies.de"></div>
+      <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier} form-control family email" id="${identifier}EMail" value=""></div>
     </div>`
   } else {
     option =
@@ -203,11 +222,11 @@ function addTemplate(target) {
   var html =
   `<div class="row">
     <div class="col-2">Vorname</div>
-    <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier}   form-control family" id="${identifier}Firstname" value="${identifier}Firstname"></div>
+    <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier}   form-control family" id="${identifier}Firstname" value=""></div>
   </div>
   <div class="row">
     <div class="col-2">Nachname</div>
-    <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier}   form-control family" id="${identifier}Lastname" value="${identifier}Lastname"></div>
+    <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier}   form-control family" id="${identifier}Lastname" value=""></div>
   </div>
   ${option}
   <br>`
@@ -242,7 +261,7 @@ function newFamily() {
   <h1>Neue Familie</h1>
   <div class="row">
   <div class="col-2">Familienname</div>
-  <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="form-control family" id="familyName" value="Fam ${Math.floor(Math.random()*1000)}"></div>
+  <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="form-control family" id="familyName" value=""></div>
   </div>
   <hr>
   <h3>Elternteile:</h3>
@@ -301,7 +320,7 @@ function pushAdults(familyKey, familyName) {
       });
 
       //delete user to allow smooth developement
-      // taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
+      taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
 
     }).catch(function(error) {
       // Handle Errors here.
@@ -338,9 +357,18 @@ function pushAdults(familyKey, familyName) {
     let chatUsers = {}
     chatUsers = JSON.parse(JSON.stringify(adults))
     chatUsers[firebase.auth().currentUser.uid] = true
-    newChat(chatUsers, familyName)
-    return database.ref(devRef+'/families/' + familyKey + '/adults/').set(adults)
+
+    let prom = database.ref(devRef+'/families/' + familyKey + '/adults/').set(adults)
+    let chatId = newChat(chatUsers, familyName)
+    console.log([prom,chatId])
+    return [prom,chatId]
   }).catch(error => { console.log(error.message)} )
+}
+
+function addChatToGroups(chatId,chatGroupIds){
+  for (let chatGroupId in chatGroupIds) {
+    database.ref(`/daycares/chats/${chatGroupId}/chats`).update({ chatId : true })
+  }
 }
 
 function pushKids(familyKey) {
@@ -349,6 +377,7 @@ function pushKids(familyKey) {
   var count = 0
   var target = 'kid'
   var kids = {}
+  var groups = []
   while (document.getElementById(target+count+'Lastname') !== null) {
     let newKey = database.ref(devRef).push().key
     let lastname = document.getElementById(target+count+'Lastname').value
@@ -359,9 +388,13 @@ function pushKids(familyKey) {
       firstname,
       group
     }
+    if(groups.find( e => { return e == this},group) == undefined){
+      groups.push(group)
+    }
     count += 1
   }
-  return database.ref(devRef).child('/families/' + familyKey + '/kids').set(kids)
+  let prom = database.ref(devRef).child('/families/' + familyKey + '/kids').set(kids)
+  return [prom, groups]
 }
 
 function pushFamilyToFirebase(familyKey) {
@@ -411,11 +444,18 @@ function pushFamilyToFirebase(familyKey) {
     })//end for each
   })//end then
   let p1 = database.ref(devRef).child('/families/'+familyKey).set(family)
-  let p2 = pushAdults(familyKey, familyName)
-  let p3 = pushKids(familyKey)
+  let promsChatId = pushAdults(familyKey, familyName)
+  console.log(promsChatId)
+  // let p2 =
+  // let chatId =
+
+  let promsGroups = pushKids(familyKey)
+  // let p3 = promsGroups[0]
+  // let groups = promsGroups[1]
 
   //wait for all to be sovled
-  Promise.all([p1, p2, p3]).then(function(){
+  Promise.all([p1, promsChatId[0], promsGroups[0]]).then(function(){
+    addChatToGroups(promsChatId[1],promsGroups[1])
     showDaycare()
   }).catch(function(e){
     console.log(e)
@@ -467,7 +507,9 @@ function newChat(users, familyName) {
     database.ref(devRef+`/chats/${chatKey}/messages`).push(message)
     message['content'] = 'Willkommen im Chat!';
     database.ref(devRef+`/chats/${chatKey}/lastMessage`).set(message)
+
   })
+  return chatKey
 }
 
 

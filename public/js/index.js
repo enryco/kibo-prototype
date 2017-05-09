@@ -20,7 +20,7 @@ firebase.initializeApp(config);
 var database = firebase.database();
 
 //developer mode?
-var devRef = true ? '/1' : ''
+var devRef = true ? '/0' : ''
 
 //init locale time
 moment.locale('de')
@@ -350,6 +350,13 @@ function displayChats() {
     });
 }
 
+//Send new Broadcast message
+function sendBroadcast(chatIds,senderId,message) {
+  for(let chatId in chatIds) {
+    pushMessageToFirebase(chatId,senderId,message)
+  }
+}
+
 //Send New Message
 function pushMessageToFirebase(chatID, senderID, receiverIDs, message) {
   if (!(chatID && senderID && receiverIDs && message)) {
@@ -362,6 +369,15 @@ function pushMessageToFirebase(chatID, senderID, receiverIDs, message) {
   var chatRef = database.ref(devRef+'/chats/' + chatID); //get chat-messages reference
   //var userRef = database.ref(devRef+'/users/' + senderID + '/chats/' + chatID);
   //
+  //check wether chat is broadcast
+  //if broadcast ->  send as broadcast
+  chatRef.child('broadcast').once('value').then( broadcast => {
+    if(broadcast.exists() && broadcast.val()) {
+      //send as broadcast
+      //get list of receiver chats
+      sendBroadcast(chadIds,senderID,message)
+    }
+  })
   var chatJSON = {};
   var name = getSenderName(senderID);
   Promise.all([name]).then(function(results) {
