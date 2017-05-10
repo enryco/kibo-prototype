@@ -350,15 +350,8 @@ function displayChats() {
     });
 }
 
-//Send new Broadcast message
-function sendBroadcast(chatIds,senderId,message) {
-  for(let chatId in chatIds) {
-    pushMessageToFirebase(chatId,senderId,message)
-  }
-}
-
 //Send New Message
-function pushMessageToFirebase(chatID, senderID, receiverIDs, message) {
+function pushMessageToFirebase(chatID, senderID, receiverIDs, message, broadcastChild) {
   if (!(chatID && senderID && receiverIDs && message)) {
       return false;
   };
@@ -375,7 +368,14 @@ function pushMessageToFirebase(chatID, senderID, receiverIDs, message) {
     if(broadcast.exists() && broadcast.val()) {
       //send as broadcast
       //get list of receiver chats
-      sendBroadcast(chadIds,senderID,message)
+      chatRef.child('chats').once('value').then( chats => {
+        chats.forEach( chat => {
+          console.log(chat.key)
+          if(chat.key != chatID) {
+            pushMessageToFirebase(chat.key, senderID, 'none', message, true)
+          }
+        })
+      })
     }
   })
   var chatJSON = {};
@@ -394,7 +394,7 @@ function pushMessageToFirebase(chatID, senderID, receiverIDs, message) {
     chatRef.child('messages').push(chatJSON);
     chatRef.child('lastMessage').set(chatJSON);
 
-    displayChat(chatID); //Reload Chat View -> Later: Check if message has arrived @DB and APPEND to current view
+    if (!broadcastChild) { displayChat(chatID); } //Reload Chat View -> Later: Check if message has arrived @DB and APPEND to current view
 
   });
 
