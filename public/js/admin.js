@@ -479,7 +479,8 @@ function pushFamilyToFirebase(familyKey) {
     let inputFields = document.getElementsByClassName('family')
     for (let i=0;i<inputFields.length;i++) {
       if(inputFields[i].value == false || '' || undefined || null){
-        return alert('Bitte alle Felder ausfüllen')
+        alert('Bitte alle Felder ausfüllen')
+        return false
       }
     }
 
@@ -492,11 +493,13 @@ function pushFamilyToFirebase(familyKey) {
     for (let i=0;i<emails.length;i++){
       let email = emails[i].value
       if(!checkMail(email)) {
-        return alert(`E-Mail "${email}" ist falsch formatiert.`)
+        alert(`E-Mail "${email}" ist falsch formatiert.`)
+        return false
       }
     }
+    return true
   }
-  // checkFields(); TODO Return impl
+  if(!checkFields()) { return false }
 
 
   //first, disable button to prevent multiple pushes
