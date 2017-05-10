@@ -20,7 +20,7 @@ firebase.initializeApp(config);
 var database = firebase.database();
 
 //developer mode?
-var devRef = true ? '/0' : ''
+var devRef = true ? '/1' : ''
 
 //init locale time
 moment.locale('de')
@@ -193,12 +193,14 @@ function displayCalendar() {
   database.ref(devRef+'/calendarEvents').orderByChild('date').once("value")
     .then(function(snapshot) {
       snapshot.forEach(function(childSnapshot){
-        var title = childSnapshot.val().title;
-        var preview = childSnapshot.val().preview;
-        var id = childSnapshot.key;
+        let time = moment(childSnapshot.val().timestamp).format('ddd,DoMoY')
+        let title = childSnapshot.val().title;
+        let header = `${time} - ${title}`
+        let preview = childSnapshot.val().preview;
+        let id = childSnapshot.key;
         // var eventTitle = childSnapshot.val().title;
-        var eventContent = childSnapshot.val().content;
-        var post = displayPost(title, preview, 'event', id); //title, preview, content, id
+        let eventContent = childSnapshot.val().content;
+        let post = displayPost(header, preview, 'event', id); //title, preview, content, id
         $('#pageContent').append(post);
       })
     })
@@ -349,7 +351,7 @@ function displayChats() {
 }
 
 //Send New Message
-function pushMessageToFirebase(chatID, senderID, receiverIDs, message) {
+function pushMessageToFirebase(chatID, senderID, receiverIDs, message, broadcastChild) {
   if (!(chatID && senderID && receiverIDs && message)) {
       return false;
   };
@@ -360,6 +362,22 @@ function pushMessageToFirebase(chatID, senderID, receiverIDs, message) {
   var chatRef = database.ref(devRef+'/chats/' + chatID); //get chat-messages reference
   //var userRef = database.ref(devRef+'/users/' + senderID + '/chats/' + chatID);
   //
+  //check wether chat is broadcast
+  //if broadcast ->  send as broadcast
+  chatRef.child('broadcast').once('value').then( broadcast => {
+    if(broadcast.exists() && broadcast.val()) {
+      //send as broadcast
+      //get list of receiver chats
+      chatRef.child('chats').once('value').then( chats => {
+        chats.forEach( chat => {
+          console.log(chat.key)
+          if(chat.key != chatID) {
+            pushMessageToFirebase(chat.key, senderID, 'none', message, true)
+          }
+        })
+      })
+    }
+  })
   var chatJSON = {};
   var name = getSenderName(senderID);
   Promise.all([name]).then(function(results) {
@@ -376,7 +394,7 @@ function pushMessageToFirebase(chatID, senderID, receiverIDs, message) {
     chatRef.child('messages').push(chatJSON);
     chatRef.child('lastMessage').set(chatJSON);
 
-    displayChat(chatID); //Reload Chat View -> Later: Check if message has arrived @DB and APPEND to current view
+    if (!broadcastChild) { displayChat(chatID); } //Reload Chat View -> Later: Check if message has arrived @DB and APPEND to current view
 
   });
 

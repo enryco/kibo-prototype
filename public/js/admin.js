@@ -23,14 +23,38 @@ var taube = firebase.initializeApp(config, 'taube');
 //var pageContent = document.getElementById('pageContent');
 var database = firebase.database();
 
-//developer mode?
-var devRef = true ? '/0' : ''
+//developer helpers
+var devRef = true ? '/1' : ''
+function cleanDB() {
+  database.ref(devRef).set(
+    { "daycares" : {
+        "-Kjc11ZE6hxX83rfigFA" : {
+          "admin" : {
+            "cWaGTqcy5eTeLADJKZMCWtzmL9N2" : true
+          },
+          "name" : "Purzelbaum"
+        }
+      },
+      "users" : {
+        "cWaGTqcy5eTeLADJKZMCWtzmL9N2" : {
+          "daycares" : {
+            "-Kjc11ZE6hxX83rfigFA" : true
+          },
+          "firstname" : "Enrico",
+          "fullname" : "Enrico Scherlies"
+        }
+      }
+    }
+  )
+}
+var rand = function() { return Math.floor(Math.random()*1e4) }
 
 //update an user
 function updateUser(uid, attributesObj){
   database.ref(devRef+'/users/'+uid).update(attributesObj)
 }
 
+//TODO
 function newDaycare(uid, daycareName){
 
   uid ? addToUser(uid) : createUser()
@@ -135,7 +159,26 @@ function newGroup() {
     .then( snapshot => {
       snapshot.forEach( cS => {
         let daycareKey = cS.key
-        database.ref(devRef+`/daycares/${daycareKey}/groups`).push({name})
+        let groupKey = database.ref(devRef+`/daycares/${daycareKey}/groups`).push({name}).key
+        let uid = firebase.auth().currentUser.uid
+        let message = {
+          content : "Neuer Broadcast-Chat initialisiert. Nachrichten die hier abgeschickt werden, erhalten alle Gruppenmitglieder in ihrem persönlichen Chat",
+          sender : uid,
+          senderName : 'Admin',
+          timestamp : firebase.database.ServerValue.TIMESTAMP
+          }
+        let chatObj = {
+          broadcast : true,
+          familyName : `<i class="fa fa-arrow-right" aria-hidden="true"></i> ${name}`,
+          users : {
+            [uid] : true },
+          messages : {
+            [database.ref().push().key] : message
+          },
+          lastMessage : message
+        }
+        database.ref(devRef+`/chats/${groupKey}`).set(chatObj)
+        database.ref(devRef+`/users/${uid}/chats`).update({ [groupKey] : true })
       })//end for each
     })//end then
     showDaycare()
@@ -174,7 +217,7 @@ function addTemplate(target) {
     option = `
     <div class="row">
       <div class="col-2">E-Mail</div>
-      <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier} form-control family email" id="${identifier}EMail" value="testUser${count}@enricoscherlies.de"></div>
+      <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier} form-control family email" id="${identifier}EMail" value=""></div>
     </div>`
   } else {
     option =
@@ -203,11 +246,11 @@ function addTemplate(target) {
   var html =
   `<div class="row">
     <div class="col-2">Vorname</div>
-    <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier}   form-control family" id="${identifier}Firstname" value="${identifier}Firstname"></div>
+    <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier}   form-control family" id="${identifier}Firstname" value=""></div>
   </div>
   <div class="row">
     <div class="col-2">Nachname</div>
-    <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier}   form-control family" id="${identifier}Lastname" value="${identifier}Lastname"></div>
+    <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="${identifier}   form-control family" id="${identifier}Lastname" value=""></div>
   </div>
   ${option}
   <br>`
@@ -242,7 +285,7 @@ function newFamily() {
   <h1>Neue Familie</h1>
   <div class="row">
   <div class="col-2">Familienname</div>
-  <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="form-control family" id="familyName" value="Fam ${Math.floor(Math.random()*1000)}"></div>
+  <div class="col-10 col-lg-4 col-xl-4"><input type="text" class="form-control family" id="familyName" value=""></div>
   </div>
   <hr>
   <h3>Elternteile:</h3>
@@ -264,128 +307,200 @@ function newFamily() {
 
 }
 
-function pushAdults(familyKey, familyName) {
-  // FUNCTION to set adult entries to db
-  var count = 0
-  var target = 'adult'
-  var adults = {}
-  var callCenter = [] //use to gather all promisses from while loop
 
-  function createNewUser(email,firstname,lastname,familyKey) {
-    let adult = {
-      lastname,
-      firstname,
-      fullname : `${firstname} ${lastname}`,
-      email,
-      familyKey
-    }
-    //create actual user w/ random pw
-    //using second firebase app for signin up new user
-    let temporaryPassword = database.ref(devRef).push().key //use a key to set pw
-    let newUser = taube.auth().createUserWithEmailAndPassword(email, temporaryPassword).then(function(newUser) {
-
-      //change users displayName
-      taube.auth().currentUser.updateProfile({ displayName : firstname }).then( _ =>  console.log('Username Changed'))
-
-      //make db entry of adult properties
-      database.ref(devRef+'/users/'+newUser.uid).set(adult)
-
-      //make list for family/adults
-      adults[newUser.uid] = true
-
-      //send reset-password mail
-      taube.auth().sendPasswordResetEmail(email).then(function() {
-        // Email sent.
-      }, function(error) {
-        // An error happened.
-      });
-
-      //delete user to allow smooth developement
-      taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
-
-    }).catch(function(error) {
-      // Handle Errors here.
-      var errorCode = error.code
-      var errorMessage = error.message
-      console.log(error.message)
-      return false
-      // ...
-    });
-
-    //append newUser (Promise) to callCenter
-    callCenter.push(newUser)
-
+function addChatToGroups(chatId,chatGroupIds){
+  for (let index in chatGroupIds) {
+    database.ref(devRef+`/chats/${(chatGroupIds[index])}/chats`).update({ [chatId] : true })
   }
-  //iterate over adultTemplates
-  //gather in neat JSON
-  while (document.getElementById(target+count+'Lastname') !== null) {
-    // let adultKey = database.ref(devRef).push().key
-    let lastname = document.getElementById(target+count+'Lastname').value
-    let firstname =  document.getElementById(target+count+'Firstname').value
-    let email = document.getElementById(target+count+'EMail').value
-
-    createNewUser(email,firstname,lastname,familyKey)
-    count += 1
-  }
-
-
-  //wait for everyone to have us called back
-  Promise.all(callCenter).then(function(){
-    //sign last taube user out
-    taube.auth().signOut()
-
-    //newChat TODO get chat out of this messy function
-    let chatUsers = {}
-    chatUsers = JSON.parse(JSON.stringify(adults))
-    chatUsers[firebase.auth().currentUser.uid] = true
-    newChat(chatUsers, familyName)
-    return database.ref(devRef+'/families/' + familyKey + '/adults/').set(adults)
-  }).catch(error => { console.log(error.message)} )
 }
 
-function pushKids(familyKey) {
-  //iterate over kidTemplates
-  //gather in neat JSON
-  var count = 0
-  var target = 'kid'
-  var kids = {}
-  while (document.getElementById(target+count+'Lastname') !== null) {
-    let newKey = database.ref(devRef).push().key
-    let lastname = document.getElementById(target+count+'Lastname').value
-    let firstname =  document.getElementById(target+count+'Firstname').value
-    let group = document.getElementById(target+count+'Group').value
-    kids[newKey] = {
-      lastname,
-      firstname,
-      group
-    }
-    count += 1
-  }
-  return database.ref(devRef).child('/families/' + familyKey + '/kids').set(kids)
-}
 
 function pushFamilyToFirebase(familyKey) {
 
-  //check wether inputs are filled
-  let inputFields = document.getElementsByClassName('family')
-  for (let i=0;i<inputFields.length;i++) {
-    if(inputFields[i].value == false || '' || undefined || null){
-      return alert('Bitte alle Felder ausfüllen')
+  let chatKey = database.ref(devRef+'chats').push().key
+  let groups = []
+  //helper function to set adults
+  function pushAdults(familyKey, familyName) {
+    // FUNCTION to set adult entries to db
+    var count = 0
+    var target = 'adult'
+    var adults = {}
+    var callCenter = [] //use to gather all promisses from while loop
+
+    function createNewUser(email,firstname,lastname,familyKey) {
+      let adult = {
+        lastname,
+        firstname,
+        fullname : `${firstname} ${lastname}`,
+        email,
+        familyKey
+      }
+      //create actual user w/ random pw
+      //using second firebase app for signin up new user
+      let temporaryPassword = database.ref(devRef).push().key //use a key to set pw
+      let newUser = taube.auth().createUserWithEmailAndPassword(email, temporaryPassword).then(function(newUser) {
+
+        //change users displayName
+        taube.auth().currentUser.updateProfile({ displayName : firstname }).then( _ =>  console.log('Username Changed'))
+
+        //make db entry of adult properties
+        database.ref(devRef+'/users/'+newUser.uid).set(adult)
+
+        //make list for family/adults
+        adults[newUser.uid] = true
+
+        //send reset-password mail
+        taube.auth().sendPasswordResetEmail(email).then(function() {
+          // Email sent.
+        }, function(error) {
+          // An error happened.
+        });
+
+        //delete user to allow smooth developement
+        taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
+
+      }).catch(function(error) {
+        // Handle Errors here.
+        var errorCode = error.code
+        var errorMessage = error.message
+        console.log(error.message)
+        return false
+        // ...
+      });
+
+      //append newUser (Promise) to callCenter
+      callCenter.push(newUser)
+
     }
+    //iterate over adultTemplates
+    //gather in neat JSON
+    while (document.getElementById(target+count+'Lastname') !== null) {
+      // let adultKey = database.ref(devRef).push().key
+      let lastname = document.getElementById(target+count+'Lastname').value
+      let firstname =  document.getElementById(target+count+'Firstname').value
+      let email = document.getElementById(target+count+'EMail').value
+
+      createNewUser(email,firstname,lastname,familyKey)
+      count += 1
+    }
+
+
+    //wait for everyone to have us called back
+    Promise.all(callCenter).then(function(){
+      //sign last taube user out
+      taube.auth().signOut()
+
+      //newChat TODO get chat out of this messy function
+      let chatUsers = {}
+      chatUsers = JSON.parse(JSON.stringify(adults))
+      chatUsers[firebase.auth().currentUser.uid] = true
+      newChat(chatUsers, familyName)
+      return database.ref(devRef+'/families/' + familyKey + '/adults/').set(adults)
+    }).catch(error => { console.log(error.message)} )
   }
 
-  //check wether email inputs are good formated
-  function checkMail(email) {
-    var regexEmailFormat = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3}$/;
-    return regexEmailFormat.test(email)
-  }
-  let emails = document.getElementsByClassName('email')
-  for (let i=0;i<emails.length;i++){
-    let email = emails[i].value
-    if(!checkMail(email)) {
-      return alert(`E-Mail "${email}" ist falsch formatiert.`)
+  //helper function to set kids
+  function pushKids(familyKey) {
+    //iterate over kidTemplates
+    //gather in neat JSON
+    let count = 0
+    let target = 'kid'
+    let kids = {}
+    while (document.getElementById(target+count+'Lastname') !== null) {
+      let newKey = database.ref(devRef).push().key
+      let lastname = document.getElementById(target+count+'Lastname').value
+      let firstname =  document.getElementById(target+count+'Firstname').value
+      let group = document.getElementById(target+count+'Group').getAttribute('groupkey')
+      kids[newKey] = {
+        lastname,
+        firstname,
+        group
+      }
+      if(groups.find( function(e){ return e == this},group) == undefined){
+        groups.push(group)
+      }
+      count += 1
     }
+    return database.ref(devRef).child('/families/' + familyKey + '/kids').set(kids)
   }
+
+  //initialize a new chat
+  //users must be json containing { user1 : true, ... }
+  function newChat(users, familyName) {
+    //get new chat key
+    // chatKey = database.ref(devRef+'chats').push().key
+    // console.log(chatKey)
+
+    //create participants JSON
+    for (let key in users) {
+      //add chat id to users/$uid/chats
+      database.ref(devRef+`/users/${key}/chats`).update({ [chatKey] : true })
+    }
+
+    //initialize chat with paticipants
+    database.ref(devRef+`/chats/${chatKey}/users`).set(users)
+
+    //create chat name as familyName
+    //as for now: just take the familyname from DOM Element
+    database.ref(devRef+`/chats/${chatKey}/`).update({ familyName })
+
+    //initialize welcome message
+    var userNames = '<ul>'
+    var proms = []
+    for (let userId in users) {
+      let prom = database.ref(devRef+`/users/${userId}/`).once('value')
+      .then( snapshot => {
+        let name = snapshot.val().fullname ? snapshot.val().fullname : snapshot.val().firstname
+        userNames += `<li>${name}</li>`
+      })
+      proms.push(prom)
+    }
+    Promise.all(proms).then( proms => {
+      userNames += '</ul>'
+      let message = {
+        content : `👋 Willkommen im Chat! Mitglieder sind ${userNames}`,
+        sender : firebase.auth().currentUser.uid,
+        senderName : "Admin",
+        timestamp : firebase.database.ServerValue.TIMESTAMP
+        // receiver :
+        //   receiverIDs
+        //timestamp
+      }
+      database.ref(devRef+`/chats/${chatKey}/messages`).push(message)
+      message['content'] = 'Willkommen im Chat!';
+      database.ref(devRef+`/chats/${chatKey}/lastMessage`).set(message)
+    })
+  }
+
+
+
+  //check wether inputs are filled
+  function checkFields() {
+    let inputFields = document.getElementsByClassName('family')
+    for (let i=0;i<inputFields.length;i++) {
+      if(inputFields[i].value == false || '' || undefined || null){
+        alert('Bitte alle Felder ausfüllen')
+        return false
+      }
+    }
+
+    //check wether email inputs are good formated
+    function checkMail(email) {
+      var regexEmailFormat = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3}$/;
+      return regexEmailFormat.test(email)
+    }
+    let emails = document.getElementsByClassName('email')
+    for (let i=0;i<emails.length;i++){
+      let email = emails[i].value
+      if(!checkMail(email)) {
+        alert(`E-Mail "${email}" ist falsch formatiert.`)
+        return false
+      }
+    }
+    return true
+  }
+  if(!checkFields()) { return false }
+
 
   //first, disable button to prevent multiple pushes
   document.getElementById('done').disabled = true
@@ -416,58 +531,13 @@ function pushFamilyToFirebase(familyKey) {
 
   //wait for all to be sovled
   Promise.all([p1, p2, p3]).then(function(){
+    console.log('Chatkey:',chatKey,'Groups:',groups)
+    addChatToGroups(chatKey,groups)
     showDaycare()
   }).catch(function(e){
     console.log(e)
   })
 
-}
-
-//initialize a new chat
-//users must be json containing { user1 : true, ... }
-function newChat(users, familyName) {
-  //get new chat key
-  var chatKey = database.ref(devRef+'chats').push().key
-
-  //create participants JSON
-  for (let key in users) {
-    //add chat id to users/$uid/chats
-    database.ref(devRef+`/users/${key}/chats`).update({ [chatKey] : true })
-  }
-
-  //initialize chat with paticipants
-  database.ref(devRef+`/chats/${chatKey}/users`).set(users)
-
-  //create chat name as familyName
-  //as for now: just take the familyname from DOM Element
-  database.ref(devRef+`/chats/${chatKey}/`).update({ familyName })
-
-  //initialize welcome message
-  var userNames = '<ul>'
-  var proms = []
-  for (let userId in users) {
-    let prom = database.ref(devRef+`/users/${userId}/`).once('value')
-    .then( snapshot => {
-      let name = snapshot.val().fullname ? snapshot.val().fullname : snapshot.val().firstname
-      userNames += `<li>${name}</li>`
-    })
-    proms.push(prom)
-  }
-  Promise.all(proms).then( proms => {
-    userNames += '</ul>'
-    let message = {
-      content : `👋 Willkommen im Chat! Mitglieder sind ${userNames}`,
-      sender : firebase.auth().currentUser.uid,
-      senderName : "Admin",
-      timestamp : firebase.database.ServerValue.TIMESTAMP
-      // receiver :
-      //   receiverIDs
-      //timestamp
-    }
-    database.ref(devRef+`/chats/${chatKey}/messages`).push(message)
-    message['content'] = 'Willkommen im Chat!';
-    database.ref(devRef+`/chats/${chatKey}/lastMessage`).set(message)
-  })
 }
 
 
