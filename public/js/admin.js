@@ -24,7 +24,7 @@ var taube = firebase.initializeApp(config, 'taube');
 var database = firebase.database();
 
 //developer helpers
-var devRef = true ? '/0' : ''
+var devRef = true ? '/1' : ''
 function cleanDB() {
   database.ref(devRef).set(
     { "daycares" : {
