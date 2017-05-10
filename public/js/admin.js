@@ -317,7 +317,7 @@ function addChatToGroups(chatId,chatGroupIds){
 
 function pushFamilyToFirebase(familyKey) {
 
-  let chatKey = ''
+  let chatKey = database.ref(devRef+'chats').push().key
   let groups = []
   //helper function to set adults
   function pushAdults(familyKey, familyName) {
@@ -428,8 +428,8 @@ function pushFamilyToFirebase(familyKey) {
   //users must be json containing { user1 : true, ... }
   function newChat(users, familyName) {
     //get new chat key
-    chatKey = database.ref(devRef+'chats').push().key
-    console.log(chatKey)
+    // chatKey = database.ref(devRef+'chats').push().key
+    // console.log(chatKey)
 
     //create participants JSON
     for (let key in users) {
