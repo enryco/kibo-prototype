@@ -133,11 +133,9 @@ function pushNewPost() {
    var date = document.getElementById('new-event-date');
    var content = CKEDITOR.instances.newEventContent.getData();
 
-   //Check if Date is propperly formated
-   date = parseInt(date.value) //Convert DOM Value to Integer
-   if (!Number.isInteger(date) || !(date.toString().split('').length === 6)) {
-         return alert('Bitte Formatierung des Datums beachten!')
-       }
+  if(moment(date.value,'YYMMDD').isValid() === false) {
+    return alert('Bitte Formatierung des Datums beachten!')
+  }
 
    if (content && title.value) {
      kitaUpdatesRef.push({
@@ -145,7 +143,7 @@ function pushNewPost() {
        content : content,
        preview : preview.value,
        uid : uid,
-       timestamp : firebase.database.ServerValue.TIMESTAMP,
+       timestamp : moment(date.value,'YYMMDD').valueOf(),
        date : date
      });
      document.getElementById('new-event').style.display = 'none';
