@@ -183,7 +183,7 @@ function showDaycare() {
 function showFamilies() {
 
   //show groups
-  database.ref(devRef+`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
+  database.ref(devRef+`/users/${uid}/daycares`).once('value')
   .then( daycares => {
     daycares.forEach( daycare => {
 
@@ -237,12 +237,12 @@ function newGroup() {
     }
 
     //push to database
-    database.ref(devRef+`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
+    database.ref(devRef+`/users/${uid}/daycares`).once('value')
     .then( snapshot => {
       snapshot.forEach( cS => {
         let daycareKey = cS.key
         let groupKey = database.ref(devRef+`/daycares/${daycareKey}/groups`).push({name}).key
-        let uid = firebase.auth().currentUser.uid
+        let uid = uid
         let message = {
           content : "Neuer Broadcast-Chat initialisiert. Nachrichten die hier abgeschickt werden, erhalten alle Gruppenmitglieder in ihrem persönlichen Chat",
           sender : uid,
@@ -340,15 +340,15 @@ function addTemplate(target) {
   $(template).append(html)
 
   if (target == 'kid') {
-    database.ref(devRef+`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
+    database.ref(devRef+`/users/${uid}/daycares`).once('value')
     .then( snapshot => {
       snapshot.forEach( cS => {
         let daycareKey = cS.key
         database.ref(devRef+`/daycares/${daycareKey}/groups`).once("value")
         .then( snapshot2 => {
-          console.log(snapshot2.key)
+          //console.log(snapshot2.key)
           snapshot2.forEach( cs2 => {
-            console.log(cs2.val().name)
+            //console.log(cs2.val().name)
             let groupKey = cs2.key
             let groupName = cs2.val().name
             let button = `<button class="dropdown-item" href="#" onclick="selectGroup('${identifier}','${groupKey}','${groupName}')">${groupName}</button>`
@@ -423,7 +423,7 @@ function pushFamilyToFirebase(familyKey) {
       let newUser = taube.auth().createUserWithEmailAndPassword(email, temporaryPassword).then(function(newUser) {
 
         //change users displayName
-        taube.auth().currentUser.updateProfile({ displayName : firstname }).then( _ =>  console.log('Username Changed'))
+        // taube.auth().currentUser.updateProfile({ displayName : firstname }).then( _ =>  console.log('Username Changed'))
 
         //make db entry of adult properties
         database.ref(devRef+'/users/'+newUser.uid).set(adult)
@@ -475,7 +475,7 @@ function pushFamilyToFirebase(familyKey) {
       //newChat TODO get chat out of this messy function
       let chatUsers = {}
       chatUsers = JSON.parse(JSON.stringify(adults))
-      chatUsers[firebase.auth().currentUser.uid] = true
+      chatUsers[uid] = true
       newChat(chatUsers, familyName)
       return database.ref(devRef+'/families/' + familyKey + '/adults/').set(adults)
     }).catch(error => { console.log(error.message)} )
@@ -541,7 +541,7 @@ function pushFamilyToFirebase(familyKey) {
       userNames += '</ul>'
       let message = {
         content : `👋 Willkommen im Chat! Mitglieder sind ${userNames}`,
-        sender : firebase.auth().currentUser.uid,
+        sender : uid,
         senderName : "Admin",
         timestamp : firebase.database.ServerValue.TIMESTAMP
         // receiver :
@@ -600,7 +600,7 @@ function pushFamilyToFirebase(familyKey) {
 
   //push family base to firebase
   //to daycare ref
-  database.ref(devRef+`/users/${firebase.auth().currentUser.uid}/daycares`).once('value')
+  database.ref(devRef+`/users/${uid}/daycares`).once('value')
   .then( daycares => {
     daycares.forEach( daycare => {
       //show famillies
@@ -613,111 +613,11 @@ function pushFamilyToFirebase(familyKey) {
 
   //wait for all to be sovled
   Promise.all([p1, p2, p3]).then(function(){
-    console.log('Chatkey:',chatKey,'Groups:',groups)
+    //console.log('Chatkey:',chatKey,'Groups:',groups)
     addChatToGroups(chatKey,groups)
     showDaycare()
   }).catch(function(e){
     console.log(e)
   })
 
-}
-
-
-/*************************
-APP FUNCTIONS
-************************/
-
-//Clean Up Page Content
-if (typeof cleanUpUI != 'function') {
-
-  function cleanUpUI() {
-    $('#pageContent').html('')
-  }
-
-  /********************
-  Splash Screen Functions
-  *********************/
-
-  //Sign-Out Function
-  function signOut() {
-    var user = firebase.auth().currentUser;
-    if (user) {
-      //$('#output').append('<br>User Signed-In');
-      //document.getElementById('login-screen').style.display = 'none';
-      firebase.auth().signOut().then(function() {
-        console.log('Signed Out');
-      }, function(error) {
-        console.error('Sign Out Error', error);
-      });
-    }
-    else {
-      //$('#output').append('<br>User is signed-Out');
-    };
-  }
-
-  // Sign-In Fucntion
-  function signIn() {
-    var user = firebase.auth().currentUser
-    if (!user) {
-      var email = document.getElementById('email').value;
-      var password = document.getElementById('password').value;
-      firebase.auth().signInWithEmailAndPassword(email, password).catch(function(error) {
-        // Handle Errors here.
-        var errorCode = error.code;
-        var errorMessage = error.message;
-        // ...
-        alert(errorMessage);
-      });
-    }
-    else {
-      firebase.auth().signOut().then(function() {
-        console.log('Signed Out');
-      }, function(error) {
-        console.error('Sign Out Error', error);
-      });
-    }
-  }
-
-  //App initialization - fires everytime the document is load
-  function initApp() {
-    firebase.auth().onAuthStateChanged(function(user) {
-      if (user) {
-        // User is signed in.
-        var displayName = user.displayName;
-        var email = user.email;
-        var emailVerified = user.emailVerified;
-        var photoURL = user.photoURL;
-        var isAnonymous = user.isAnonymous;
-        var uid = user.uid;
-        var providerData = user.providerData;
-
-        document.getElementById('login-screen').style.display = 'none'; //Hide login ccreen if user is signed-In
-        document.getElementById('main-view').style.display = '';
-
-        //load home view with family DB
-        cleanUpUI()
-
-      } else {
-        // User is signed out.
-        document.getElementById('login-screen').style.display = ''; //Show login screen if user is signed-Out
-        document.getElementById('main-view').style.display = 'none';
-
-      } //end if
-    }); //end of mehtod
-
-    //dev
-    $('#email').val('e.scherlies@me.com');
-    $('#password').val('qwer1234');
-
-    //Add Event Listenesrs
-    document.getElementById('signOutButton').addEventListener('click',signOut,false);
-    document.getElementById('signInButton').addEventListener('click',signIn,false);
-    // document.getElementById('newFamily').addEventListener('click',newFamily,false);
-    // document.getElementById('newGroup').addEventListener('click',newGroup,false);
-  }
-
-  window.onload = function() {
-    initApp();
-    console.log('Init')
-  };
 }
