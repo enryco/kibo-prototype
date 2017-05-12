@@ -20,10 +20,13 @@ firebase.initializeApp(config);
 var database = firebase.database();
 
 //developer mode?
-var devRef = true ? '/1' : ''
+var devRef = true ? '/0' : ''
 
 //init locale time
 moment.locale('de')
+
+var email = 'none';
+var uid = 'none';
 
 /*************************
   CURATOR - NEW Post
@@ -47,7 +50,7 @@ function pushNewPost() {
       title : postTitle.value,
       preview : postPreview.value,
       content : postContent,
-      uid: firebase.auth().currentUser.uid,
+      uid: uid,
       timestamp : firebase.database.ServerValue.TIMESTAMP
     });
     document.getElementById('new-post').style.display = 'none';
@@ -170,7 +173,7 @@ function displayKitaUpdates() {
        title : title.value,
        content : content,
        preview : preview.value,
-       uid : firebase.auth().currentUser.uid,
+       uid : uid,
        timestamp : firebase.database.ServerValue.TIMESTAMP,
        date : date
      });
@@ -319,12 +322,10 @@ function displayChats() {
   $('#pageContent').html(list)
 
   //get all chats and appent them to the list
-  function chatElement(chatKey,header,timestamp,content,name) {
-    content = content ? content : 'undefined'
-    name = name ? name : 'undefined'
+  function chatElement(chatKey,header,timestamp,content = '',name = '') {
     let timeFromNow = timestamp ? moment(timestamp).fromNow() : 'undefined'
     if(content.split('').lenth > 30) {content = content.split('').slice(0,30).join('')}
-
+    
     let html = `<a href="#" class="list-group-item list-group-item-action flex-column align-items-start" onclick="displayChat('${chatKey}')">
       <div class="d-flex w-100 justify-content-between">
         <h5 class="mb-1">${header}</h5>
@@ -335,7 +336,7 @@ function displayChats() {
     $('#chatsGroup').append(html)
   }
   //get all chats the user is in
-  database.ref(devRef+`/users/${firebase.auth().currentUser.uid}/chats`).once('value')
+  database.ref(devRef+`/users/${uid}/chats`).once('value')
     .then( snapshot => {
       snapshot.forEach( childSnapshot => {
         let chatKey = childSnapshot.key
@@ -358,7 +359,7 @@ function pushMessageToFirebase(chatID, senderID, receiverIDs, message, broadcast
   //strip message from potential html
   message = $("<div>").html(message).text()
 
-  //var uid = firebase.auth().currentUser.uid;
+  //var uid = uid;
   var chatRef = database.ref(devRef+'/chats/' + chatID); //get chat-messages reference
   //var userRef = database.ref(devRef+'/users/' + senderID + '/chats/' + chatID);
   //
@@ -403,7 +404,7 @@ function pushMessageToFirebase(chatID, senderID, receiverIDs, message, broadcast
 
 function sendMessage(chatID) {
   //
-  var senderID = firebase.auth().currentUser.uid; //get user id
+  var senderID = uid; //get user id
   var message = document.getElementById('chat-message-input'); //message form id
   if (!message.value) { return alert('Nachricht darf nicht leer sein')};
   //var chatID = database.ref(devRef+'/user/' + senderID + '/chats'); //get reference to chat
@@ -447,7 +448,7 @@ function displayUser() {
   cleanUpUI();
   $('#pageTitle').html('Einstellungen')
 
-  var userName = getSenderName(firebase.auth().currentUser.uid);
+  var userName = getSenderName(uid);
   var email = firebase.auth().currentUser.email;
 
   Promise.all([userName]).then(function (results){
@@ -516,7 +517,6 @@ function resetPassword() {
   Load Admin Script
   ************************/
 function checkAdmin() {
-  let uid = firebase.auth().currentUser.uid
   database.ref(devRef+`/users/${uid}/daycares`).once('value')
     .then(daycares => {
       daycares.forEach((daycare) => {
@@ -570,21 +570,23 @@ function cleanUpUI() {
   document.getElementById('backButton').style.display = 'none';
 }
 
+
+
 //App initialization - fires everytime the document is load
 function initApp() {
   firebase.auth().onAuthStateChanged(function(user) {
     if (user) {
 
-      checkAdmin()
       // User is signed in.
       var displayName = user.displayName;
-      var email = user.email;
+      email = user.email;
       var emailVerified = user.emailVerified;
       var photoURL = user.photoURL;
       var isAnonymous = user.isAnonymous;
-      var uid = user.uid;
+      uid = user.uid;
       var providerData = user.providerData;
 
+      checkAdmin()
 
       document.getElementById('login-screen').style.display = 'none'; //Hide login ccreen if user is signed-In
       document.getElementById('main-view').style.display = '';
