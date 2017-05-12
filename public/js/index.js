@@ -28,58 +28,18 @@ moment.locale('de')
 var email = 'none';
 var uid = 'none';
 
-/*************************
-  CURATOR - NEW Post
-  ************************/
-
-//Create New Post
-function newPost() {
-  cleanUpUI();
-  document.getElementById('new-post').style.display = '';
-}
-
-//Push New Post To Database & Load view
-function pushNewPost() {
-  var kitaUpdatesRef = database.ref(devRef+'/kitaUpdates');
-  var postTitle = document.getElementById('new-post-title');
-  var postPreview = document.getElementById('new-post-preview');
-  // var postContent = document.getElementById('new-post-content'); //No longer needed
-  var postContent = CKEDITOR.instances.newPostContent.getData(); //get Data of CKEDITOR
-  if (postContent && postTitle.value && postPreview.value) {
-    kitaUpdatesRef.push({
-      title : postTitle.value,
-      preview : postPreview.value,
-      content : postContent,
-      uid: uid,
-      timestamp : firebase.database.ServerValue.TIMESTAMP
-    });
-    document.getElementById('new-post').style.display = 'none';
-    displayKitaUpdates();
-    postTitle.value = '';
-    postContent.value = '';
-  } else {
-    alert('Bitte Titel und Inhalt eingeben');
-  }
-}
+/****************************
+  Global
+  ***************************/
 
 //Post Template
 function displayPost(title, preview, target, id) {
-  var button = '';
-  if (target == 'post') {
-    var clickfunction = `displayPostDetail('${id}','post')`
-  } else if (target == 'event') {
-    var clickfunction = `displayPostDetail('${id}','event')`
-  } else {
-    return Error('Target not defined')
-  }
-
+  let button = '';
+  let clickfunction = `displayPostDetail('${id}','${target}')`
   if (id) {
-    button = '<button class="btn btn-primary" onclick="' +
-      clickfunction +
-      '" role="button" id="button' + id + '" > Weiterlesen </button>'
+    button = `<button class="btn btn-primary" onclick="${clickfunction}" role="button" id="button${id}">Weiterlesen</button>`
   };
-
-  var post =
+  let post =
     '<p>' +
       '<div class="card">' +
         '<h4 class="card-header">' + title + '</h4>' +
@@ -92,7 +52,6 @@ function displayPost(title, preview, target, id) {
     '</p>';
   return post;
 }
-
 
 /****************************
   KITA UPDATES
@@ -122,7 +81,7 @@ function displayPostDetail(id, target) {
 function displayKitaUpdates() {
   cleanUpUI(); //Clean-Up View
   $("#pageTitle").html("Neues");
-  $('#newEntry').removeClass('invisible').on('click',newPost)
+  if(typeof newPost == 'function') $('#newEntry').removeClass('invisible').on('click',newPost)
   var content = '';
   var kitaUpdatesRef = database.ref(devRef+'/kitaUpdates').orderByKey();//.push({title:'feuer'});
   //pageContent.innerHTML += postTemplate('Test',kitaUpdates.once('value').val());
@@ -147,52 +106,11 @@ function displayKitaUpdates() {
  CALENDAR
  *********************/
 
- //Create New Event
- function newEvent() {
-   cleanUpUI();
-   document.getElementById('new-event').style.display = '';
- }
-
- //Push New Post To Database & Load view
- function pushEventPost() {
-
-   var kitaUpdatesRef = database.ref(devRef+'/calendarEvents');
-   var title = document.getElementById('new-event-title');
-   var preview = document.getElementById('new-event-preview');
-   var date = document.getElementById('new-event-date');
-   var content = CKEDITOR.instances.newEventContent.getData();
-
-   //Check if Date is propperly formated
-   date = parseInt(date.value) //Convert DOM Value to Integer
-   if (!Number.isInteger(date) || !(date.toString().split('').length === 6)) {
-         return alert('Bitte Formatierung des Datums beachten!')
-       }
-
-   if (content && title.value) {
-     kitaUpdatesRef.push({
-       title : title.value,
-       content : content,
-       preview : preview.value,
-       uid : uid,
-       timestamp : firebase.database.ServerValue.TIMESTAMP,
-       date : date
-     });
-     document.getElementById('new-event').style.display = 'none';
-     displayCalendar();
-     title.value = '';
-     preview.value = '';
-     date.value = '';
-     // postContent.value = '';
-   } else {
-     alert('Bitte Titel und Inhalt eingeben');
-   }
- }
-
 //Load Calendar view
 function displayCalendar() {
   cleanUpUI();
   $("#pageTitle").html("Kita Termine");
-  $('#newEntry').removeClass('invisible').on('click',newEvent)
+  if(typeof newEvent == 'function') $('#newEntry').removeClass('invisible').on('click',newEvent)
   database.ref(devRef+'/calendarEvents').orderByChild('date').once("value")
     .then(function(snapshot) {
       snapshot.forEach(function(childSnapshot){
@@ -325,7 +243,7 @@ function displayChats() {
   function chatElement(chatKey,header,timestamp,content = '',name = '') {
     let timeFromNow = timestamp ? moment(timestamp).fromNow() : 'undefined'
     if(content.split('').lenth > 30) {content = content.split('').slice(0,30).join('')}
-    
+
     let html = `<a href="#" class="list-group-item list-group-item-action flex-column align-items-start" onclick="displayChat('${chatKey}')">
       <div class="d-flex w-100 justify-content-between">
         <h5 class="mb-1">${header}</h5>
@@ -365,20 +283,23 @@ function pushMessageToFirebase(chatID, senderID, receiverIDs, message, broadcast
   //
   //check wether chat is broadcast
   //if broadcast ->  send as broadcast
-  chatRef.child('broadcast').once('value').then( broadcast => {
-    if(broadcast.exists() && broadcast.val()) {
-      //send as broadcast
-      //get list of receiver chats
-      chatRef.child('chats').once('value').then( chats => {
-        chats.forEach( chat => {
-          console.log(chat.key)
-          if(chat.key != chatID) {
-            pushMessageToFirebase(chat.key, senderID, 'none', message, true)
-          }
+  if(broadcastChild !== true) {
+    chatRef.child('broadcast').once('value').then( broadcast => {
+      if(broadcast.exists() && broadcast.val()) {
+        //send as broadcast
+        //get list of receiver chats
+        chatRef.child('chats').once('value').then( chats => {
+          chats.forEach( chat => {
+            // console.log(chat.key)
+            if(chat.key != chatID) {
+              pushMessageToFirebase(chat.key, senderID, 'none', message, true)
+            }
+          })
         })
-      })
-    }
-  })
+      }
+    })
+  }
+
   var chatJSON = {};
   var name = getSenderName(senderID);
   Promise.all([name]).then(function(results) {
@@ -516,43 +437,37 @@ function resetPassword() {
 /*************************
   Load Admin Script
   ************************/
+var counter = (function () {
+    let counter = 0;
+    return function () {return ++counter;}
+})();
+
 function checkAdmin() {
-  database.ref(devRef+`/users/${uid}/daycares`).once('value')
+  if(counter() === 1) {
+    database.ref(devRef+`/users/${uid}/daycares`).once('value')
     .then(daycares => {
       daycares.forEach((daycare) => {
-          let key = daycare.key
-          database.ref(devRef+`/daycares/${key}/admin/${uid}`).once('value')
-            .then( snapshot => {
-              if (snapshot.exists()) {
-                loadAdmin()
-              }
+        let key = daycare.key
+        database.ref(devRef+`/daycares/${key}/admin/${uid}`).once('value')
+        .then( snapshot => {
+          if (snapshot.exists()) {
+            $.getScript( "./js/admin.js" )
+            .done(function( script, textStatus ) {
+              document.getElementById('admin').style.display = '';
+              document.getElementById('newEntry').style.display = '';
+              $('#admin').on('click', showDaycare);
             })
+            .fail(function( jqxhr, settings, exception ) {
+              // console.log( jqxhr );
+            });
+          }
+        })
       })
     })
-
-}
-
-function loadAdmin(){
-
-  function initAdminTools() {
-      document.getElementById('admin').style.display = '';
-      document.getElementById('newEntry').style.display = '';
-      $('#admin').on('click', showDaycare)
-  }
-
-  if(loadAdmin.counter === 0) {
-    $.getScript( "./js/admin.js" )
-      .done(function( script, textStatus ) {
-        initAdminTools();
-      })
-      .fail(function( jqxhr, settings, exception ) {
-        // console.log( jqxhr );
-    });
   } else { return console.error('This has already been called')}
-
-  loadAdmin.counter++
 }
-loadAdmin.counter = 0
+
+
 
 /*************************
   APP FUNCTIONS
@@ -570,8 +485,6 @@ function cleanUpUI() {
   document.getElementById('backButton').style.display = 'none';
 }
 
-
-
 //App initialization - fires everytime the document is load
 function initApp() {
   firebase.auth().onAuthStateChanged(function(user) {
@@ -586,12 +499,11 @@ function initApp() {
       uid = user.uid;
       var providerData = user.providerData;
 
-      checkAdmin()
-
       document.getElementById('login-screen').style.display = 'none'; //Hide login ccreen if user is signed-In
       document.getElementById('main-view').style.display = '';
       document.getElementById('navbar-view').style.display = '';
 
+      checkAdmin()
       //specify init view
       //TODO turn off in deploy
       displayKitaUpdates();
@@ -612,8 +524,6 @@ function initApp() {
   //Add Event Listenesrs
   // document.getElementById('signOutButton').addEventListener('click',signOut,false);
   document.getElementById('signInButton').addEventListener('click',signIn,false);
-  document.getElementById('kita-updates-push-button').addEventListener('click',pushNewPost,false);
-  document.getElementById('kita-event-push-button').addEventListener('click',pushEventPost,false);
 
     //Navigation Buttons
   document.getElementById('home-button').addEventListener('click',displayKitaUpdates,false);

@@ -23,6 +23,9 @@ var taube = firebase.initializeApp(config, 'taube');
 //var pageContent = document.getElementById('pageContent');
 var database = firebase.database();
 
+document.getElementById('kita-updates-push-button').addEventListener('click',pushNewPost,false);
+document.getElementById('kita-event-push-button').addEventListener('click',pushEventPost,false);
+
 //developer helpers
 var devRef = true ? '/0' : ''
 function cleanDB() {
@@ -76,6 +79,85 @@ function newDaycare(uid, daycareName){
     addToUser(uid)
   }
 }
+
+/*************************
+  NEW Post
+  ************************/
+
+//Create New Post
+function newPost() {
+  cleanUpUI();
+  document.getElementById('new-post').style.display = '';
+}
+
+//Push New Post To Database & Load view
+function pushNewPost() {
+  let kitaUpdatesRef = database.ref(devRef+'/kitaUpdates');
+  let postTitle = document.getElementById('new-post-title');
+  let postPreview = document.getElementById('new-post-preview');
+  // var postContent = document.getElementById('new-post-content'); //No longer needed
+  let postContent = CKEDITOR.instances.newPostContent.getData(); //get Data of CKEDITOR
+  if (postContent && postTitle.value && postPreview.value) {
+    kitaUpdatesRef.push({
+      title : postTitle.value,
+      preview : postPreview.value,
+      content : postContent,
+      uid: uid,
+      timestamp : firebase.database.ServerValue.TIMESTAMP
+    });
+    document.getElementById('new-post').style.display = 'none';
+    displayKitaUpdates();
+    postTitle.value = '';
+    postContent.value = '';
+  } else {
+    alert('Bitte Titel und Inhalt eingeben');
+  }
+}
+
+/********************
+ CALENDAR
+ *********************/
+
+ //Create New Event
+ function newEvent() {
+   cleanUpUI();
+   document.getElementById('new-event').style.display = '';
+ }
+
+ //Push New Post To Database & Load view
+ function pushEventPost() {
+
+   var kitaUpdatesRef = database.ref(devRef+'/calendarEvents');
+   var title = document.getElementById('new-event-title');
+   var preview = document.getElementById('new-event-preview');
+   var date = document.getElementById('new-event-date');
+   var content = CKEDITOR.instances.newEventContent.getData();
+
+   //Check if Date is propperly formated
+   date = parseInt(date.value) //Convert DOM Value to Integer
+   if (!Number.isInteger(date) || !(date.toString().split('').length === 6)) {
+         return alert('Bitte Formatierung des Datums beachten!')
+       }
+
+   if (content && title.value) {
+     kitaUpdatesRef.push({
+       title : title.value,
+       content : content,
+       preview : preview.value,
+       uid : uid,
+       timestamp : firebase.database.ServerValue.TIMESTAMP,
+       date : date
+     });
+     document.getElementById('new-event').style.display = 'none';
+     displayCalendar();
+     title.value = '';
+     preview.value = '';
+     date.value = '';
+     // postContent.value = '';
+   } else {
+     alert('Bitte Titel und Inhalt eingeben');
+   }
+ }
 
 /********************
 Show Family and Group DB Tree
