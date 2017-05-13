@@ -237,6 +237,8 @@ function displayChat(chatID) {
       readByList += '</ul>'
       $('#pageContent').append(readByList)
 
+      chatBadge();
+
     })//end .then
   })
 
@@ -288,18 +290,22 @@ function displayChats() {
 }
 
 function chatBadge() {
-  let counter = 0;
+  var counter = 0;
+
   //get all chats the user is in
   database.ref(devRef+`/users/${uid}/chats`).once('value')
-    .then( snapshot => {
-      snapshot.forEach( childSnapshot => {
-        let chatKey = childSnapshot.key
-        database.ref(devRef+`/chats/${chatKey}/`).once('value').then( snapshot => {
-          if(snapshot.child('readBy').hasChild(uid)) { counter++ }
-        })
-        $('#chatBadge').html(counter == 0 ? '' : counter)
-      })
-    });
+  .then( snapshot => {
+    snapshot.forEach( childSnapshot => {
+      let chatKey = childSnapshot.key
+      database.ref(devRef+`/chats/${chatKey}/`).once('value').then( snapshot => {
+        if(!snapshot.child('readBy').hasChild(uid)) {
+          counter++;console.log('++')
+        }
+        $('#chatBadge').html(counter == 0 ? '' : counter);
+      })//end then
+    })//end for each
+  })//end then
+
 }
 
 //Send New Message
@@ -509,7 +515,8 @@ function checkAdmin() {
 
 //Clean Up Page Content
 function cleanUpUI() {
-  chatBadge();
+  // console.log('Callee:',arguments.callee.caller.name)
+  if(arguments.callee.caller.name !== 'displayChats' && arguments.callee.caller.name !== 'displayChat') {chatBadge(); }
   $('#pageContent').html('');
   $('body').css('padding-bottom','70px');
   $('#newEntry').addClass('invisible')
