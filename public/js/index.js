@@ -251,6 +251,7 @@ function displayChat(chatID) {
 //Display Chats (esp. for Kilei or later use)
 function displayChats() {
   cleanUpUI()
+  $('#pageTitle').html('Chats')
   document.getElementById('navbar-chat').style.display = 'none';
   let list = `<div class="list-group" id="chatsGroup"></div>`
   $('#pageContent').html(list)
@@ -282,6 +283,21 @@ function displayChats() {
           let read = snapshot.child('readBy').hasChild(uid)
           chatElement(chatKey,famName,timestamp,content,name, read)
         })
+      })
+    });
+}
+
+function chatBadge() {
+  let counter = 0;
+  //get all chats the user is in
+  database.ref(devRef+`/users/${uid}/chats`).once('value')
+    .then( snapshot => {
+      snapshot.forEach( childSnapshot => {
+        let chatKey = childSnapshot.key
+        database.ref(devRef+`/chats/${chatKey}/`).once('value').then( snapshot => {
+          if(snapshot.child('readBy').hasChild(uid)) { counter++ }
+        })
+        $('#chatBadge').html(counter == 0 ? '' : counter)
       })
     });
 }
@@ -493,6 +509,7 @@ function checkAdmin() {
 
 //Clean Up Page Content
 function cleanUpUI() {
+  chatBadge();
   $('#pageContent').html('');
   $('body').css('padding-bottom','70px');
   $('#newEntry').addClass('invisible')
@@ -537,7 +554,7 @@ function initApp() {
     } //end if
   }); //end of mehtod
 
-  $('#email').val('e.scherlies@me.com');
+  // $('#email').val('e.scherlies@me.com');
 
   //Add Event Listenesrs
   // document.getElementById('signOutButton').addEventListener('click',signOut,false);

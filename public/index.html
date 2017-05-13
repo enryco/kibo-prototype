@@ -48,10 +48,13 @@
       <p><i>v1.0 alpha</i></p>
       <p>Test Version</p>
       <ol>
-        <li>Bitte gib die von dir zur Verfügung gestellte E-Mail Adresse ein</li>
+        <!-- <li>Bitte gib die von dir zur Verfügung gestellte E-Mail Adresse ein</li>
         <li>Klicke auf "Passwort Zurücksetzen"</li>
         <li>Schauen in deinem E-Mail Postfach nach und setz ein neues Passwort</li>
         <li>Log dich mit deinem neuen Passwort ein 👍 </li>
+        <li>Viel Spaß 😊</li> -->
+        <li>Bitte gib die von dir zur Verfügung gestellte E-Mail Adresse ein</li>
+        <li>Log dich mit dem Passwort ein 👍 </li>
         <li>Viel Spaß 😊</li>
       </ol>
 
@@ -191,8 +194,13 @@
 
           <div class="col col-md-auto col-lg-auto">
             <a class="" href="#" type="" role="" id="chat-button">
-              <i class="fa fa-comments fa-2x" aria-hidden="true"></i>
-              <!-- <font size="4" style="display:none"><sup><span class="badge badge-pill badge-danger">12</span></sup></font> -->
+              <span class="fa-stack">
+                <i class="fa fa-comments fa-2x fa-stack-2x" aria-hidden="true"></i>
+                <!-- <sup class="text-danger"><i class="fa fa-circle fa-2x" aria-hidden="true"></i></sup> -->
+                <!-- <font size="4" style="display:''" class="fa-stack-1x"><sup><span class="badge badge-pill badge-danger">20</span></sup></font> -->
+                <sup class="pull-right"><span class="badge badge-pill badge-danger" id="chatBadge"></span></sup>
+              </span>
+
             </a>
           </div>
 
