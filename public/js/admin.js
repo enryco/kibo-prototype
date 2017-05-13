@@ -418,6 +418,7 @@ function pushFamilyToFirebase(familyKey) {
       //create actual user w/ random pw
       //using second firebase app for signin up new user
       let temporaryPassword = database.ref(devRef).push().key //use a key to set pw
+      temporaryPassword = "qwer1234"
       let newUser = taube.auth().createUserWithEmailAndPassword(email, temporaryPassword).then(function(newUser) {
 
         //change users displayName
@@ -429,15 +430,15 @@ function pushFamilyToFirebase(familyKey) {
         //make list for family/adults
         adults[newUser.uid] = true
 
-        //send reset-password mail
-        taube.auth().sendPasswordResetEmail(email).then(function() {
-          // Email sent.
-        }, function(error) {
-          // An error happened.
-        });
+        //send reset-password mail TODO
+        // taube.auth().sendPasswordResetEmail(email).then(function() {
+        //   // Email sent.
+        // }, function(error) {
+        //   // An error happened.
+        // });
 
-        //delete user to allow smooth developement
-        taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
+        //delete user to allow smooth developement TODO
+        // taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
 
       }).catch(function(error) {
         // Handle Errors here.

@@ -202,9 +202,9 @@ function displayChat(chatID) {
   //wait for senderNames
   //display messages
   Promise.all(proms).then( _ => {
-    var chatRef = database.ref(devRef+'/chats/' + chatID + '/messages').orderByKey();
+    var chatRef = database.ref(devRef+'/chats/' + chatID);
     chatRef.once('value').then( function(snapshot){
-      snapshot.forEach(function(childSnapshot){
+      snapshot.child('messages').forEach(function(childSnapshot){
         let messageID = childSnapshot.key;
         let content = childSnapshot.val().content;
 
@@ -220,7 +220,23 @@ function displayChat(chatID) {
         let messageHTML = displayMessage(content,header);
 
         $('#pageContent').append(messageHTML);
+
       })//end for each
+
+      //update readBy status of current user
+      chatRef.child('readBy').update( { [uid] : true })
+
+      let readByList = `<ul style="list-style: none" class="text-center text-success">`
+      snapshot.child('readBy').forEach( user => {
+        readByList += `<li><i class="fa fa-check-circle-o" aria-hidden="true"></i> ${senderNames[user.key]}</li>`
+        // $('#pageContent').append(`${senderNames[user.key]}`)
+      })
+      if(!snapshot.child('readBy').child(uid).exists()){
+          readByList += `<li><i class="fa fa-check-circle-o" aria-hidden="true"></i> ${senderNames[uid]}</li>`
+      }
+      readByList += '</ul>'
+      $('#pageContent').append(readByList)
+
     })//end .then
   })
 
@@ -240,16 +256,16 @@ function displayChats() {
   $('#pageContent').html(list)
 
   //get all chats and appent them to the list
-  function chatElement(chatKey,header,timestamp,content = '',name = '') {
+  function chatElement(chatKey,header,timestamp,content = '',name = '', read = true) {
     let timeFromNow = timestamp ? moment(timestamp).fromNow() : 'undefined'
     if(content.split('').lenth > 30) {content = content.split('').slice(0,30).join('')}
-
+    let dot = !read ? '<i class="fa fa-circle text-primary" aria-hidden="true"></i> ' : ''
     let html = `<a href="#" class="list-group-item list-group-item-action flex-column align-items-start" onclick="displayChat('${chatKey}')">
       <div class="d-flex w-100 justify-content-between">
         <h5 class="mb-1">${header}</h5>
         <small class="text-muted">${timeFromNow}</small>
       </div>
-      <small class="text-muted">${name}: ${content}</small>
+      <small class="text-muted">${dot}${name}: ${content}</small>
     </a>`
     $('#chatsGroup').append(html)
   }
@@ -263,7 +279,8 @@ function displayChats() {
           let content = snapshot.child('lastMessage').child('content').val()
           let name = snapshot.child('lastMessage').child('senderName').val()
           let timestamp = snapshot.child('lastMessage').child('timestamp').val()
-          chatElement(chatKey,famName,timestamp,content,name)
+          let read = snapshot.child('readBy').hasChild(uid)
+          chatElement(chatKey,famName,timestamp,content,name, read)
         })
       })
     });
@@ -315,6 +332,7 @@ function pushMessageToFirebase(chatID, senderID, receiverIDs, message, broadcast
     };
     chatRef.child('messages').push(chatJSON);
     chatRef.child('lastMessage').set(chatJSON);
+    chatRef.child('readBy').set({});
 
     if (!broadcastChild) { displayChat(chatID); } //Reload Chat View -> Later: Check if message has arrived @DB and APPEND to current view
 
@@ -506,8 +524,8 @@ function initApp() {
       checkAdmin()
       //specify init view
       //TODO turn off in deploy
-      displayKitaUpdates();
-      // displayChats();
+      // displayKitaUpdates();
+      displayChats();
       // displayCalendar();
       // newEvent();
 
