@@ -15,6 +15,8 @@ var config = {
 };
 firebase.initializeApp(config);
 
+const appVersion = "0.16"
+
 //shortcuts
 //var pageContent = document.getElementById('pageContent');
 var database = firebase.database();
@@ -552,6 +554,9 @@ function initApp() {
       // displayChats();
       // displayCalendar();
       // newEvent();
+
+      database.ref('/log/').push({ uid, timestamp  : firebase.database.ServerValue.TIMESTAMP, navigator : navigator.userAgent, appVersion })
+
 
     } else {
       // User is signed out.
