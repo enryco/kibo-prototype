@@ -20,7 +20,7 @@ firebase.initializeApp(config);
 var database = firebase.database();
 
 //developer mode?
-var devRef = true ? '/0' : ''
+var devRef = true ? '/1' : ''
 
 //init locale time
 moment.locale('de')
@@ -548,8 +548,8 @@ function initApp() {
       checkAdmin()
       //specify init view
       //TODO turn off in deploy
-      // displayKitaUpdates();
-      displayChats();
+      displayKitaUpdates();
+      // displayChats();
       // displayCalendar();
       // newEvent();
 

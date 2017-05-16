@@ -15,7 +15,7 @@ catch(error) {
   //if already initialized, do nothing
 }
 
-
+var uid = firebase.auth().currentUser.uid
 //second app for admin reasons…
 var taube = firebase.initializeApp(config, 'taube');
 
@@ -27,7 +27,7 @@ document.getElementById('kita-updates-push-button').addEventListener('click',pus
 document.getElementById('kita-event-push-button').addEventListener('click',pushEventPost,false);
 
 //developer helpers
-var devRef = true ? '/0' : ''
+// var devRef = true ? '/0' : ''
 function cleanDB() {
   database.ref(devRef).set(
     { "daycares" : {
@@ -240,7 +240,7 @@ function newGroup() {
       snapshot.forEach( cS => {
         let daycareKey = cS.key
         let groupKey = database.ref(devRef+`/daycares/${daycareKey}/groups`).push({name}).key
-        let uid = uid
+        // let uid = uid
         let message = {
           content : "Neuer Broadcast-Chat initialisiert. Nachrichten die hier abgeschickt werden, erhalten alle Gruppenmitglieder in ihrem persönlichen Chat",
           sender : uid,
@@ -418,7 +418,7 @@ function pushFamilyToFirebase(familyKey) {
       //create actual user w/ random pw
       //using second firebase app for signin up new user
       let temporaryPassword = database.ref(devRef).push().key //use a key to set pw
-      temporaryPassword = "qwer1234"
+      // temporaryPassword = "testzugang1234"
       let newUser = taube.auth().createUserWithEmailAndPassword(email, temporaryPassword).then(function(newUser) {
 
         //change users displayName
@@ -431,11 +431,11 @@ function pushFamilyToFirebase(familyKey) {
         adults[newUser.uid] = true
 
         //send reset-password mail TODO
-        // taube.auth().sendPasswordResetEmail(email).then(function() {
-        //   // Email sent.
-        // }, function(error) {
-        //   // An error happened.
-        // });
+        taube.auth().sendPasswordResetEmail(email).then(function() {
+          // Email sent.
+        }, function(error) {
+          // An error happened.
+        });
 
         //delete user to allow smooth developement TODO
         // taube.auth().currentUser.delete().then(function() {  console.log('User deleted')     }, function(error) { /* An error happened. */ })
@@ -511,6 +511,7 @@ function pushFamilyToFirebase(familyKey) {
     //get new chat key
     // chatKey = database.ref(devRef+'chats').push().key
     // console.log(chatKey)
+    //!!! Chat key is available trough callee function
 
     //create participants JSON
     for (let key in users) {
